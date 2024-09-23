@@ -3,17 +3,17 @@ import {
   IsDate,
   IsEmail,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
 export class CreateVendorUserDto {
-  @IsString()
-  @IsOptional()
-  id: string;
-  
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  vendorId: string;
+  @ApiProperty({
+    example: '1',
+  })
+  vendorId: number;
 
   @IsString()
   @IsNotEmpty()
@@ -22,22 +22,24 @@ export class CreateVendorUserDto {
   })
   username: string;
 
-  @IsEmail() 
+  @IsEmail()
   @ApiProperty({
-    example: 'testemail',
+    example: 'testemail@mail.com',
   })
- email: string;
+  email: string;
 
   @IsString()
-  @IsNotEmpty() 
+  @IsNotEmpty()
   @ApiProperty({
     example: 'testpassword',
   })
   password: string;
 
-  @IsString()
   @IsNotEmpty()
-  roleId: string;
+  @ApiProperty({
+    example: '1',
+  })
+  roleId: number;
 
   @IsDate()
   @IsOptional()

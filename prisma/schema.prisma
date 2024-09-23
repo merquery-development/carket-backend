@@ -8,42 +8,44 @@ datasource db {
 }
 
 model Vendor {
-  id        String       @id @default(uuid()) @db.Uuid
+  id        Int          @id @default(autoincrement())
   name      String
   email     String
   phone     String
   address   String
   createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @updatedAt @map("updated_at")
+  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at")
   users     VendorUser[]
   carPosts  CarPost[]
 }
 
 model VendorUser {
-  id        String   @id @default(uuid()) @db.Uuid
-  vendorId  String   @db.Uuid
+  id        Int       @id @default(autoincrement())
+  vendorId  Int
   username  String
   email     String
+  lastLogin DateTime? @map("last_login")
+  isEnable  Boolean   @default(true) @map("is_enable")
   password  String
-  roleId    String   @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  vendor    Vendor   @relation(fields: [vendorId], references: [id])
-  role      Role     @relation(fields: [roleId], references: [id])
+  roleId    Int
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  vendor    Vendor    @relation(fields: [vendorId], references: [id])
+  role      Role      @relation(fields: [roleId], references: [id])
 }
 
 model Customer {
-  id        String        @id @default(uuid()) @db.Uuid
+  id        Int           @id @default(autoincrement())
   username  String
   email     String
   password  String
   createdAt DateTime      @default(now()) @map("created_at")
-  updatedAt DateTime      @updatedAt @map("updated_at")
+  updatedAt DateTime      @default(now()) @updatedAt @map("updated_at")
   carViews  UserCarView[]
 }
 
 model Role {
-  id          String           @id @default(uuid()) @db.Uuid
+  id          Int              @id @default(autoincrement())
   name        String
   createdAt   DateTime         @default(now()) @map("created_at")
   users       VendorUser[]
@@ -51,7 +53,7 @@ model Role {
 }
 
 model Permission {
-  id          String           @id @default(uuid()) @db.Uuid
+  id          Int              @id @default(autoincrement())
   name        String
   description String
   createdAt   DateTime         @default(now()) @map("created_at")
@@ -59,24 +61,24 @@ model Permission {
 }
 
 model RolePermission {
-  id           String     @id @default(uuid()) @db.Uuid
-  roleId       String     @db.Uuid
-  permissionId String     @db.Uuid
+  id           Int        @id @default(autoincrement())
+  roleId       Int
+  permissionId Int
   createdAt    DateTime   @default(now()) @map("created_at")
   role         Role       @relation(fields: [roleId], references: [id])
   permission   Permission @relation(fields: [permissionId], references: [id])
 }
 
 model Car {
-  id             String    @id @default(uuid()) @db.Uuid
-  categoryId     String    @db.Uuid
-  brandId        String    @db.Uuid
-  modelId        String    @db.Uuid
+  id             Int       @id @default(autoincrement())
+  categoryId     Int
+  brandId        Int
+  modelId        Int
   year           Int
   specifications Json
   basePrice      Decimal
   createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
   carViewCount   Int
   posts          CarPost[]
   Category       Category  @relation(fields: [categoryId], references: [id])
@@ -85,16 +87,16 @@ model Car {
 }
 
 model CarPost {
-  id                    String        @id @default(uuid()) @db.Uuid
-  carId                 String        @db.Uuid
-  vendorId              String        @db.Uuid
+  id                    Int           @id @default(autoincrement())
+  carId                 Int
+  vendorId              Int
   price                 Decimal
   year                  Int
   overrideSpecification Json
   isDiscount            Boolean
   preDiscountPrice      Decimal
   createdAt             DateTime      @default(now()) @map("created_at")
-  updatedAt             DateTime      @updatedAt @map("updated_at")
+  updatedAt             DateTime      @default(now()) @updatedAt @map("updated_at")
   car                   Car           @relation(fields: [carId], references: [id])
   vendor                Vendor        @relation(fields: [vendorId], references: [id])
   pictures              CarPicture[]
@@ -102,14 +104,14 @@ model CarPost {
 }
 
 model Category {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        Int      @id @default(autoincrement())
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   cars      Car[]
 }
 
 model Brand {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        Int      @id @default(autoincrement())
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   cars      Car[]
@@ -117,17 +119,17 @@ model Brand {
 }
 
 model Model {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        Int      @id @default(autoincrement())
   name      String
-  brandId   String   @db.Uuid
+  brandId   Int
   createdAt DateTime @default(now()) @map("created_at")
   cars      Car[]
   brand     Brand    @relation(fields: [brandId], references: [id])
 }
 
 model CarPicture {
-  id         String   @id @default(uuid()) @db.Uuid
-  carId      String   @db.Uuid
+  id         Int      @id @default(autoincrement())
+  carId      Int
   type       String
   pictureUrl String
   createdAt  DateTime @default(now()) @map("created_at")
@@ -135,9 +137,9 @@ model CarPicture {
 }
 
 model UserCarView {
-  id         String   @id @default(uuid()) @db.Uuid
-  customerId String   @db.Uuid
-  carId      String   @db.Uuid
+  id         Int      @id @default(autoincrement())
+  customerId Int
+  carId      Int
   createdAt  DateTime @default(now()) @map("created_at")
   customer   Customer @relation(fields: [customerId], references: [id])
   car        CarPost  @relation(fields: [carId], references: [id])

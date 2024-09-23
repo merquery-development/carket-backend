@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AppService } from '../app.service';
 import { PrismaService } from '../prisma.service';
+import { AuthController } from './controllers/auth.controller';
 import { VendorController } from './controllers/vendor.controller';
+import { AuthService } from './services/auth.service';
 import { VendorService } from './services/vendor.service';
 @Module({
   imports: [
@@ -17,7 +19,7 @@ import { VendorService } from './services/vendor.service';
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [VendorController],
-  providers: [AppService, PrismaService, VendorService],
+  controllers: [VendorController, AuthController],
+  providers: [AppService, PrismaService, VendorService, AuthService],
 })
 export class MainModule {}
