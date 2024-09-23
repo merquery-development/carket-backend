@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // คุณสามารถเปลี่ยนตามชนิดของฐานข้อมูลที่ใช้งาน
+  url      = env("DATABASE_URL")
+}
+
+model Vendor {
+  id        String       @id @default(uuid()) @db.Uuid
+  name      String
+  email     String
+  phone     String
+  address   String
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  users     VendorUser[]
+  carPosts  CarPost[]
+}
+
+model VendorUser {
+  id        String   @id @default(uuid()) @db.Uuid
+  vendorId  String   @db.Uuid
+  username  String
+  email     String
+  password  String
+  roleId    String   @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  vendor    Vendor   @relation(fields: [vendorId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+}
+
+model Customer {
+  id        String        @id @default(uuid()) @db.Uuid
+  username  String
+  email     String
+  password  String
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  carViews  UserCarView[]
+}
+
+model Role {
+  id          String           @id @default(uuid()) @db.Uuid
+  name        String
+  createdAt   DateTime         @default(now()) @map("created_at")
+  users       VendorUser[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(uuid()) @db.Uuid
+  name        String
+  description String
+  createdAt   DateTime         @default(now()) @map("created_at")
+  permissions RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(uuid()) @db.Uuid
+  roleId       String     @db.Uuid
+  permissionId String     @db.Uuid
+  createdAt    DateTime   @default(now()) @map("created_at")
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+}
+
+model Car {
+  id             String    @id @default(uuid()) @db.Uuid
+  categoryId     String    @db.Uuid
+  brandId        String    @db.Uuid
+  modelId        String    @db.Uuid
+  year           Int
+  specifications Json
+  basePrice      Decimal
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  carViewCount   Int
+  posts          CarPost[]
+  Category       Category  @relation(fields: [categoryId], references: [id])
+  Brand          Brand     @relation(fields: [brandId], references: [id])
+  Model          Model     @relation(fields: [modelId], references: [id])
+}
+
+model CarPost {
+  id                    String        @id @default(uuid()) @db.Uuid
+  carId                 String        @db.Uuid
+  vendorId              String        @db.Uuid
+  price                 Decimal
+  year                  Int
+  overrideSpecification Json
+  isDiscount            Boolean
+  preDiscountPrice      Decimal
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
+  car                   Car           @relation(fields: [carId], references: [id])
+  vendor                Vendor        @relation(fields: [vendorId], references: [id])
+  pictures              CarPicture[]
+  UserCarView           UserCarView[]
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  cars      Car[]
+}
+
+model Brand {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  cars      Car[]
+  Model     Model[]
+}
+
+model Model {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  brandId   String   @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  cars      Car[]
+  brand     Brand    @relation(fields: [brandId], references: [id])
+}
+
+model CarPicture {
+  id         String   @id @default(uuid()) @db.Uuid
+  carId      String   @db.Uuid
+  type       String
+  pictureUrl String
+  createdAt  DateTime @default(now()) @map("created_at")
+  car        CarPost  @relation(fields: [carId], references: [id])
+}
+
+model UserCarView {
+  id         String   @id @default(uuid()) @db.Uuid
+  customerId String   @db.Uuid
+  carId      String   @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  customer   Customer @relation(fields: [customerId], references: [id])
+  car        CarPost  @relation(fields: [carId], references: [id])
+}
