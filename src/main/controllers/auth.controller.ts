@@ -6,8 +6,10 @@ import {
   Post,
   Req,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 
+import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -73,5 +75,53 @@ export class AuthController {
 
     const token = authorization.substring(7); // Remove 'Bearer ' prefix
     return this.authService.getProfile(token);
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Login with Google' })
+  async googleAuth(@Req() req) {
+    return req.user;
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Google Auth Callback' })
+  googleAuthRedirect(@Req() req) {
+    return {
+      message: 'Google Authentication successful',
+      user: req.user,
+    };
+  }
+  // Facebook login route
+  @Get('facebook')
+  @UseGuards(AuthGuard('facebook')) // Corrected to 'facebook'
+  @ApiOperation({ summary: 'Login with Facebook' })
+  async facebookAuth(@Req() req) {
+    // User will be redirected to Facebook login page
+  }
+
+  // Facebook callback route
+  @Get('facebook/callback')
+  @UseGuards(AuthGuard('facebook')) // Corrected to 'facebook'
+  @ApiOperation({ summary: 'Facebook Auth Callback' })
+  facebookAuthRedirect(@Req() req) {
+    // After Facebook redirects back to your site
+    return {
+      message: 'Facebook Authentication successful',
+      user: req.user,
+    };
+  }
+
+  // Optional endpoint for showing the Facebook user info
+  @Get('facebook/login')
+  facebookLogin(@Req() req) {
+    if (!req.user) {
+      return 'No user from Facebook';
+    }
+    return {
+      message: 'User information from Facebook',
+      user: req.user,
+    };
   }
 }

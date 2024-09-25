@@ -115,7 +115,27 @@ export class AuthService {
       throw new HttpException("Invalid token'", HttpStatus.UNAUTHORIZED);
     }
   }
+  googleLogin(req) {
+    if (!req.user) {
+      return 'No user from google';
+    }
+    return {
+      message: 'User information from Google',
+      user: req.user,
+    };
+  }
+
+  facebookLogin(req) {
+    if (!req.user) {
+      return 'No user from facebook';
+    }
+    return {
+      message: 'User information from Facebook',
+      user: req.user,
+    };
+  }
 }
+
 function isHashedPassword(password: string): boolean {
   // bcrypt hashed passwords are 60 characters long and start with '$2a$' or '$2b$'
   const bcryptPattern = /^\$2[ayb]\$.{56}$/;

@@ -3,16 +3,14 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
-  });
+  const app = await NestFactory.create(AppModule, {});
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
     .setTitle('Api')
-    .setDescription('The staffs API description')
+    .setDescription('cardealer api')
     .setVersion('1.0') //frontend
-    .addBearerAuth(undefined, 'defaultBearerAuth')
+    // .addBearerAuth(undefined, 'defaultBearerAuth')
 
     .build();
 
@@ -22,9 +20,9 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: '*',
-    methods: 'GET,POST,PUT,DELETE',
-    allowedHeaders: 'Content-Type, Authorization',
+    origin: '*', // หรือระบุโดเมนที่อนุญาต เช่น 'http://localhost:3000'
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
   });
   await app.listen(3000);
 }

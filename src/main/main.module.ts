@@ -1,13 +1,20 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 import { AppService } from '../app.service';
 import { PrismaService } from '../prisma.service';
 import { AuthController } from './controllers/auth.controller';
 import { VendorController } from './controllers/vendor.controller';
 import { AuthService } from './services/auth.service';
 import { VendorService } from './services/vendor.service';
+import { GoogleStrategy } from './utils/strategy/google.strategy';
+import { ConfigModule } from '@nestjs/config';
+import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 @Module({
   imports: [
+    PassportModule,
+    ConfigModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       global: true,
       secret: process.env.ACCESS_TOKEN_SECRET,
@@ -20,6 +27,13 @@ import { VendorService } from './services/vendor.service';
     }),
   ],
   controllers: [VendorController, AuthController],
-  providers: [AppService, PrismaService, VendorService, AuthService],
+  providers: [
+    AppService,
+    PrismaService,
+    VendorService,
+    AuthService,
+    GoogleStrategy,
+    FacebookStrategy
+  ],
 })
 export class MainModule {}
