@@ -10,6 +10,8 @@ import { VendorService } from './services/vendor.service';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
 import { ConfigModule } from '@nestjs/config';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
+import { CarService } from './services/car.service';
+import { CarController } from './controllers/car.controller';
 @Module({
   imports: [
     PassportModule,
@@ -26,14 +28,15 @@ import { FacebookStrategy } from './utils/strategy/facebook.stategy';
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [VendorController, AuthController],
+  controllers: [VendorController, AuthController,CarController],
   providers: [
     AppService,
     PrismaService,
     VendorService,
     AuthService,
     GoogleStrategy,
-    FacebookStrategy
+    FacebookStrategy,
+    CarService
   ],
 })
 export class MainModule {}

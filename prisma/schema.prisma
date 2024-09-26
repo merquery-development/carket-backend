@@ -20,22 +20,27 @@ model Vendor {
 }
 
 model VendorUser {
-  id            Int       @id @default(autoincrement())
-  vendorId      Int
-  username      String? // อนุญาตให้เป็น null ได้
-  email         String // อนุญาตให้เป็น null ได้
-  mobileNumber  String?   @map("mobile_number") // เบอร์โทรศัพท์มือถือ
-  lastLogin     DateTime? @map("last_login")
-  isEnable      Boolean   @default(true) @map("(is_enable)")
-  password      String? // อนุญาตให้เป็น null ได้ในกรณีที่เป็น OAuth
-  isOauth       Boolean   @default(false) @map("is_oauth") // ตัวบ่งชี้ว่าเป็นผู้ใช้ OAuth หรือไม่
-  oauthType     String?   @map("oauth_type") // ประเภทของ OAuth เช่น Google, Facebook หรือ null
-  oauthUserData Json?     @map("oauth_user_data") // ข้อมูลที่ได้รับจาก OAuth provider เก็บในรูปแบบ JSON
-  roleId        Int
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
-  vendor        Vendor    @relation(fields: [vendorId], references: [id])
-  role          Role      @relation(fields: [roleId], references: [id])
+  id                 Int       @id @default(autoincrement())
+  vendorId           Int? // เปลี่ยนเป็น nullable
+  username           String? // อนุญาตให้เป็น null ได้
+  email              String? // อนุญาตให้เป็น null ได้
+  mobileNumber       String?   @map("mobile_number") // เบอร์โทรศัพท์มือถือ
+  lastLogin          DateTime? @map("last_login")
+  nickName           String?   @map(" nick_name")
+  firstName          String?   @map("first_name")
+  lastName           String?    @map("last_name")
+  profilePicturePath String?   @map("profile_picture_path")
+  profilePictureName String?   @map("profile_picture_name")
+  isEnable           Boolean   @default(true) @map("(is_enable)")
+  password           String? // อนุญาตให้เป็น null ได้ในกรณีที่เป็น OAuth
+  isOauth            Boolean   @default(false) @map("is_oauth") // ตัวบ่งชี้ว่าเป็นผู้ใช้ OAuth หรือไม่
+  oauthType          String?   @map("oauth_type") // ประเภทของ OAuth เช่น Google, Facebook หรือ null
+  oauthUserData      Json?     @map("oauth_user_data") // ข้อมูลที่ได้รับจาก OAuth provider เก็บในรูปแบบ JSON
+  roleId             Int?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
+  vendor             Vendor?   @relation(fields: [vendorId], references: [id])
+  role               Role?     @relation(fields: [roleId], references: [id])
 }
 
 model Customer {
@@ -79,11 +84,11 @@ model Car {
   brandId        Int
   modelId        Int
   year           Int
-  specifications Json
+  specifications Json?
   basePrice      Decimal
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
-  carViewCount   Int
+  carViewCount   Int?
   posts          CarPost[]
   Category       Category  @relation(fields: [categoryId], references: [id])
   Brand          Brand     @relation(fields: [brandId], references: [id])

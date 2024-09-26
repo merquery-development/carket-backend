@@ -20,14 +20,26 @@ export class VendorService {
     return await bcrypt.hash(password, saltRounds);
   }
   async createVendorUser(createVendorUser: CreateVendorUserDto) {
-    const hashedPassword = await this.hashPassword(createVendorUser.password);
+    let hashedPassword;
+
+    // ตรวจสอบว่ามี password หรือไม่ ถ้ามีก็ทำการ hash
+    if (createVendorUser.password) {
+      hashedPassword = await this.hashPassword(createVendorUser.password);
+    }
+
+
     const result = await this.prisma.vendorUser.create({
       data: {
-        vendorId: createVendorUser.vendorId,
-        username: createVendorUser.username, // ตรวจสอบชื่อ field ว่าตรงกับ schema Prisma หรือไม่
-        email: createVendorUser.email,
-        password: hashedPassword,
+        vendorId: createVendorUser.vendorId , // vendorId จะเป็น null หากมาจาก OAuth
+        username: createVendorUser.username || null, // username อาจเป็น null หากเป็น OAuth
+        email: createVendorUser.email, // email ต้องมาจาก OAuth หรือการลงทะเบียนปกติ
+        firstName: createVendorUser.firstname ,
+        lastName : createVendorUser.lastname || null,
+        password: hashedPassword || null, // password เป็น null ถ้าเป็น OAuth user
         roleId: createVendorUser.roleId,
+        isOauth: createVendorUser.isOauth || false, // กำหนดว่าเป็นผู้ใช้ OAuth หรือไม่
+        oauthType: createVendorUser.oauthType || null, // เก็บประเภท OAuth เช่น Google
+        oauthUserData: createVendorUser.oauthUserData || {}, // ข้อมูล OAuth ที่ได้รับ
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -35,11 +47,12 @@ export class VendorService {
 
     if (!result) {
       throw new HttpException(
-        'Error while create vendor',
+        'Error while creating vendor user',
         HttpStatus.BAD_REQUEST,
       );
     }
-    return { message: 'create successfull' };
+
+    return { message: 'User created successfully' };
   }
   catch(error) {
     throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
@@ -68,10 +81,10 @@ export class VendorService {
     }
   }
 
-  async getVendorByid(id: number) {
+  async getVendorByid(id: string) {
     const result = await this.prisma.vendorUser.findFirst({
       where: {
-        id: id,
+        id: Number(id),
       },
     });
     if (!result) {

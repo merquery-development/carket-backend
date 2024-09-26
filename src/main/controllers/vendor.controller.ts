@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { VendorService } from '../services/vendor.service';
 import { CreateVendorUserDto } from '../utils/vendor.dto';
@@ -13,7 +13,11 @@ export class VendorController {
     description: 'The record has been successfully created.',
     type: CreateVendorUserDto,
   })
-  createStaff(@Body() postData: CreateVendorUserDto) {
+  createVendor(@Body() postData: CreateVendorUserDto) {
     return this.vendorService.createVendorUser(postData);
+  }
+  @Get('id/:id')
+  getStaffById(@Param('id') id: string) {
+    return this.vendorService.getVendorByid(id);
   }
 }

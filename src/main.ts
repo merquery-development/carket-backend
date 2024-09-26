@@ -10,7 +10,7 @@ async function bootstrap() {
     .setTitle('Api')
     .setDescription('cardealer api')
     .setVersion('1.0') //frontend
-    // .addBearerAuth(undefined, 'defaultBearerAuth')
+    .addBearerAuth(undefined, 'defaultBearerAuth')
 
     .build();
 

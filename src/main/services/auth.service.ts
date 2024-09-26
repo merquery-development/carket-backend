@@ -43,7 +43,7 @@ export class AuthService {
     }
 
     await this.vendorService.updateLastLogin(vendor.id);
-    const payload = { uid: vendor.id, username: vendor.username };
+    const payload = { id: vendor.id, username: vendor.username };
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.ACCESS_TOKEN_SECRET,
       expiresIn: '15m',
@@ -115,10 +115,26 @@ export class AuthService {
       throw new HttpException("Invalid token'", HttpStatus.UNAUTHORIZED);
     }
   }
-  googleLogin(req) {
+  async googleLogin(req) {
     if (!req.user) {
       return 'No user from google';
     }
+    // ตรวจสอบว่าผู้ใช้นี้มาจาก OAuth หรือไม่
+    const oauthUserData = req.user || {}; // ข้อมูลจาก OAuth
+    const oauthType = 'Google';
+    await this.vendorService.createVendorUser({
+      vendorId: req.user.vendorId || null, // vendorId อาจเป็น null ในกรณี OAuth
+      username: req.user.username || null, // username อาจเป็น null
+      firstname: req.user.firstname,
+      lastname: req.user.lastname || null,
+      email: req.user.email, // รับค่า email จาก OAuth
+      password: null, // ไม่ต้องมี password ในกรณีของ OAuth
+      roleId: 1, // roleId เปลี่ยนทีหลังให้ดึง role ทีมี่มาจากระบบก่อน
+      isOauth: true, // ระบุว่าเป็น OAuth user
+      oauthType: oauthType,
+      oauthUserData: oauthUserData,
+      updateAt: new Date(),
+    });
     return {
       message: 'User information from Google',
       user: req.user,
@@ -129,6 +145,7 @@ export class AuthService {
     if (!req.user) {
       return 'No user from facebook';
     }
+
     return {
       message: 'User information from Facebook',
       user: req.user,

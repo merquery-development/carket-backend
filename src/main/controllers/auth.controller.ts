@@ -81,17 +81,15 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Login with Google' })
   async googleAuth(@Req() req) {
-    return req.user;
+    return this.authService.googleLogin(req);
   }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Google Auth Callback' })
   googleAuthRedirect(@Req() req) {
-    return {
-      message: 'Google Authentication successful',
-      user: req.user,
-    };
+    return  this.authService.googleLogin(req);
+    ;
   }
   // Facebook login route
   @Get('facebook')
