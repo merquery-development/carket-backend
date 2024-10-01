@@ -3,20 +3,33 @@ import {
   IsBoolean,
   IsDate,
   IsEmail,
-  IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
-export class CreateVendorUserDto {
-  @IsNumber()
-  @IsOptional() // ไม่จำเป็นต้องใส่ vendorId หากเป็น OAuth
+
+export class CreateCustomerDto {
+  @IsBoolean()
+  @IsOptional() // บ่งบอกว่าเป็นผู้ใช้ OAuth หรือไม่
   @ApiProperty({
-    example: '1',
+    example: false,
     required: false,
   })
-  vendorId: number;
+  isOauth: boolean;
 
+  @IsString()
+  @IsOptional() // เก็บประเภทของ OAuth เช่น Google, Facebook
+  @ApiProperty({
+    example: 'Google',
+    required: false,
+  })
+  oauthType: string;
+
+  @IsOptional() // ข้อมูลที่ได้รับจาก OAuth provider เก็บในรูปแบบ JSON
+  @ApiProperty({
+    example: '{}',
+    required: false,
+  })
+  oauthUserData: object;
   @IsString()
   @IsOptional() // username ไม่จำเป็นหากเป็น OAuth
   @ApiProperty({
@@ -53,37 +66,6 @@ export class CreateVendorUserDto {
     required: false,
   })
   password: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  @ApiProperty({
-    example: '1',
-  })
-  roleId: number;
-
-  @IsBoolean()
-  @IsOptional() // บ่งบอกว่าเป็นผู้ใช้ OAuth หรือไม่
-  @ApiProperty({
-    example: false,
-    required: false,
-  })
-  isOauth: boolean;
-
-  @IsString()
-  @IsOptional() // เก็บประเภทของ OAuth เช่น Google, Facebook
-  @ApiProperty({
-    example: 'Google',
-    required: false,
-  })
-  oauthType: string;
-
-  @IsOptional() // ข้อมูลที่ได้รับจาก OAuth provider เก็บในรูปแบบ JSON
-  @ApiProperty({
-    example: '{}',
-    required: false,
-  })
-  oauthUserData: object;
-
   @IsDate()
   @IsOptional()
   @ApiProperty({

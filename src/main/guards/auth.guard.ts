@@ -46,7 +46,7 @@ export class AuthGuard implements CanActivate {
     }
 
    
-    const user = await this.vendorService.getVendorByid(profile.id).catch(error => {
+    const user = await this.vendorService.getVendorByuid(profile.uid).catch(error => {
       throw new UnauthorizedException('Authguard error',error.message)
     });   
     

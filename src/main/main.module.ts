@@ -12,6 +12,9 @@ import { ConfigModule } from '@nestjs/config';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { CarService } from './services/car.service';
 import { CarController } from './controllers/car.controller';
+import { MailerService } from './services/mailer.service';
+import { CustomerService } from './services/customer.service';
+import { CustomerController } from './controllers/customer.controller';
 @Module({
   imports: [
     PassportModule,
@@ -28,7 +31,7 @@ import { CarController } from './controllers/car.controller';
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [VendorController, AuthController,CarController],
+  controllers: [VendorController, AuthController,CarController,CustomerController],
   providers: [
     AppService,
     PrismaService,
@@ -36,7 +39,9 @@ import { CarController } from './controllers/car.controller';
     AuthService,
     GoogleStrategy,
     FacebookStrategy,
-    CarService
+    CarService,
+    MailerService,
+    CustomerService
   ],
 })
 export class MainModule {}

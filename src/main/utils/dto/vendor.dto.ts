@@ -1,0 +1,72 @@
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsDate,
+  IsEmail,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+export class CreateVendorUserDto {
+  @IsNumber()
+  @IsOptional() // ไม่จำเป็นต้องใส่ vendorId หากเป็น OAuth
+  @ApiProperty({
+    example: '1',
+    required: false,
+  })
+  vendorId: number;
+
+  @IsString()
+  @IsOptional() // username ไม่จำเป็นหากเป็น OAuth
+  @ApiProperty({
+    example: 'testuser',
+    required: false,
+  })
+  username: string;
+  @IsString()
+  @IsOptional() // username ไม่จำเป็นหากเป็น OAuth
+  @ApiProperty({
+    example: 'Surapong',
+    required: false,
+  })
+  firstname: string;
+  @IsString()
+  @IsOptional() // username ไม่จำเป็นหากเป็น OAuth
+  @ApiProperty({
+    example: 'Chamalai',
+    required: false,
+  })
+  lastname: string;
+  @IsEmail()
+  @IsOptional() // email ไม่จำเป็นหากเป็น OAuth
+  @ApiProperty({
+    example: 'testemail@mail.com',
+    required: false,
+  })
+  email: string;
+
+  @IsString()
+  @IsOptional() // password ไม่จำเป็นหากเป็น OAuth
+  @ApiProperty({
+    example: 'testpassword',
+    required: false,
+  })
+  password: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: '1',
+  })
+  roleId: number;
+
+
+  @IsDate()
+  @IsOptional()
+  @ApiProperty({
+    example: new Date(),
+    required: false,
+  })
+  updateAt: Date;
+}

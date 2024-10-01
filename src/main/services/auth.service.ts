@@ -8,21 +8,41 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
+import { CustomerService } from './customer.service';
 import { VendorService } from './vendor.service';
+
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     @Inject(forwardRef(() => VendorService))
     private readonly vendorService: VendorService,
+    @Inject(forwardRef(() => CustomerService))
+    private readonly customerService: CustomerService,
   ) {}
+  async generateEmailVerificationToken(userId: string) {
+    const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+      expiresIn: '1d', // token expires in 1 day
+    });
+    return token;
+  }
+  async signIn(identifier: string, pass: string) {
+    let vendor;
 
-  async signIn(username: string, pass: string) {
-    const vendor = await this.vendorService
-      .getVendorByName(username)
-      .catch((error) => {
-        throw new HttpException('getVendorusername error', error.message);
-      });
+    // ตรวจสอบว่า identifier มีเครื่องหมาย '@' หรือไม่
+    if (identifier.includes('@')) {
+      // ถ้ามี '@' ให้ถือว่าเป็น email
+      vendor = await this.vendorService.getVendorByEmail(identifier);
+    } else {
+      // ถ้าไม่มี '@' ให้ถือว่าเป็น username
+      vendor = await this.vendorService.getVendorByName(identifier);
+    }
+    if (!vendor) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+
+    
     if (!vendor.isEnable) {
       throw new UnauthorizedException('User is not enabled');
     }
@@ -42,8 +62,12 @@ export class AuthService {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
 
-    await this.vendorService.updateLastLogin(vendor.id);
-    const payload = { id: vendor.id, username: vendor.username };
+    await this.vendorService.updateLastLogin(vendor.uid);
+    const payload = {
+      uid: vendor.uid,
+      username: vendor.username,
+      email: vendor.email,
+    };
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.ACCESS_TOKEN_SECRET,
       expiresIn: '15m',
@@ -65,15 +89,15 @@ export class AuthService {
       });
 
       // ตรวจสอบว่า Refresh Token ถูกต้อง
-      const staff = await this.vendorService.getVendorByid(decoded.id);
-      if (!staff) {
+      const vendor = await this.vendorService.getVendorByuid(decoded.uid);
+      if (!vendor) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
       // ตรวจสอบเวลาที่ล็อกอินล่าสุด
       const now = new Date();
 
-      const lastLogin = new Date(staff.lastLogin);
+      const lastLogin = new Date(vendor.lastLogin);
 
       // ตรวจสอบว่าการล็อกอินล่าสุดอยู่ในช่วงเวลาที่ Refresh Token ถูกต้อง
       const tokenValidPeriod = 24 * 60 * 60 * 1000; // 24 ชั่วโมง
@@ -122,14 +146,13 @@ export class AuthService {
     // ตรวจสอบว่าผู้ใช้นี้มาจาก OAuth หรือไม่
     const oauthUserData = req.user || {}; // ข้อมูลจาก OAuth
     const oauthType = 'Google';
-    await this.vendorService.createVendorUser({
-      vendorId: req.user.vendorId || null, // vendorId อาจเป็น null ในกรณี OAuth
+    await this.customerService.createCustomer({
       username: req.user.username || null, // username อาจเป็น null
       firstname: req.user.firstname,
       lastname: req.user.lastname || null,
       email: req.user.email, // รับค่า email จาก OAuth
       password: null, // ไม่ต้องมี password ในกรณีของ OAuth
-      roleId: 1, // roleId เปลี่ยนทีหลังให้ดึง role ทีมี่มาจากระบบก่อน
+
       isOauth: true, // ระบุว่าเป็น OAuth user
       oauthType: oauthType,
       oauthUserData: oauthUserData,
@@ -141,11 +164,25 @@ export class AuthService {
     };
   }
 
-  facebookLogin(req) {
+  async facebookLogin(req) {
     if (!req.user) {
       return 'No user from facebook';
     }
+    const oauthUserData = req.user || {}; // ข้อมูลจาก OAuth
+    const oauthType = 'Facebook';
 
+    await this.customerService.createCustomer({
+      username: req.user.username || null, // username อาจเป็น null
+      firstname: req.user.firstname,
+      lastname: req.user.lastname || null,
+      email: req.user.email, // รับค่า email จาก OAuth
+      password: null, // ไม่ต้องมี password ในกรณีของ OAuth
+
+      isOauth: true, // ระบุว่าเป็น OAuth user
+      oauthType: oauthType,
+      oauthUserData: oauthUserData,
+      updateAt: new Date(),
+    });
     return {
       message: 'User information from Facebook',
       user: req.user,

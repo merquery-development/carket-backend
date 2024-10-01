@@ -7,52 +7,78 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
-import { CreateVendorUserDto } from '../utils/vendor.dto';
+import { CreateVendorUserDto } from '../utils/dto/vendor.dto';
+import { firstPartUid } from '../utils/pagination';
 import { AuthService } from './auth.service';
+import { MailerService } from './mailer.service';
 @Injectable()
 export class VendorService {
   constructor(
     private readonly prisma: PrismaService,
-
+    @Inject(forwardRef(() => MailerService))
+    private readonly mailerService: MailerService,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
   ) {}
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
     return await bcrypt.hash(password, saltRounds);
   }
   async createVendorUser(createVendorUser: CreateVendorUserDto) {
-    let hashedPassword;
-
-    // ตรวจสอบว่ามี password หรือไม่ ถ้ามีก็ทำการ hash
-    if (createVendorUser.password) {
-      hashedPassword = await this.hashPassword(createVendorUser.password);
-    }
-
-
-    const result = await this.prisma.vendorUser.create({
-      data: {
-        vendorId: createVendorUser.vendorId , // vendorId จะเป็น null หากมาจาก OAuth
-        username: createVendorUser.username || null, // username อาจเป็น null หากเป็น OAuth
-        email: createVendorUser.email, // email ต้องมาจาก OAuth หรือการลงทะเบียนปกติ
-        firstName: createVendorUser.firstname ,
-        lastName : createVendorUser.lastname || null,
-        password: hashedPassword || null, // password เป็น null ถ้าเป็น OAuth user
-        roleId: createVendorUser.roleId,
-        isOauth: createVendorUser.isOauth || false, // กำหนดว่าเป็นผู้ใช้ OAuth หรือไม่
-        oauthType: createVendorUser.oauthType || null, // เก็บประเภท OAuth เช่น Google
-        oauthUserData: createVendorUser.oauthUserData || {}, // ข้อมูล OAuth ที่ได้รับ
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
-
-    if (!result) {
+    try {
+      let hashedPassword;
+      const existVendorUsername = await this.getVendorByName(createVendorUser.username);
+      const existVendorEmail = await this.getVendorByEmail(createVendorUser.email);
+      if (existVendorUsername || existVendorEmail) {
+    
+        
+        throw new HttpException('User already exist', HttpStatus.BAD_REQUEST);
+      }
+      const uid = firstPartUid();
+      // ตรวจสอบว่ามี password หรือไม่ ถ้ามีก็ทำการ hash
+      if (createVendorUser.password) {
+        hashedPassword = await this.hashPassword(createVendorUser.password);
+      }
+  
+      const result = await this.prisma.vendorUser.create({
+        data: {
+          vendorId: createVendorUser.vendorId, // vendorId จะเป็น null หากมาจาก OAuth
+          uid: uid,
+          username: createVendorUser.username || null, // username อาจเป็น null หากเป็น OAuth
+          email: createVendorUser.email, // email ต้องมาจาก OAuth หรือการลงทะเบียนปกติ
+          firstName: createVendorUser.firstname,
+          lastName: createVendorUser.lastname || null,
+          password: hashedPassword || null, // password เป็น null ถ้าเป็น OAuth user
+          roleId: createVendorUser.roleId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+      const verificationToken =
+        await this.authService.generateEmailVerificationToken(result.uid);
+  
+      // Send verification email
+      await this.mailerService.sendVerificationEmail(
+        result.email,
+        verificationToken,
+      );
+      if (!result) {
+        throw new HttpException(
+          'Error while creating vendor user',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+  
+      return { message: 'User created successfully' };
+    } catch (error) {
+      console.log(error);
+      
       throw new HttpException(
         'Error while creating vendor user',
         HttpStatus.BAD_REQUEST,
       );
     }
-
-    return { message: 'User created successfully' };
+  
   }
   catch(error) {
     throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
@@ -64,16 +90,23 @@ export class VendorService {
         username: username,
       },
     });
-    if (!result) {
-      throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);
-    }
+
+    return result;
+  }
+  async getVendorByEmail(email: string) {
+    const result = this.prisma.vendorUser.findFirst({
+      where: {
+        email: email,
+      },
+    });
+
     return result;
   }
 
-  async updateLastLogin(id: number) {
+  async updateLastLogin(uid: string) {
     try {
       await this.prisma.vendorUser.update({
-        where: { id: id },
+        where: { uid: uid },
         data: { lastLogin: new Date() },
       });
     } catch (error) {
@@ -81,15 +114,30 @@ export class VendorService {
     }
   }
 
-  async getVendorByid(id: string) {
+  async getVendorByuid(uid: string) {
     const result = await this.prisma.vendorUser.findFirst({
       where: {
-        id: Number(id),
+        uid: uid,
       },
     });
     if (!result) {
       throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);
     }
     return result;
+  }
+  async verifyEmail(uuid: string) {
+    const user = await this.prisma.vendorUser.update({
+      where: {
+        uid: uuid,
+      },
+      data: {
+        isEmailVerified: true,
+      },
+    });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return { message: 'update successfull' };
   }
 }

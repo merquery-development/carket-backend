@@ -1,14 +1,17 @@
 import {
   Body,
   Controller,
+  forwardRef,
   Get,
   HttpCode,
+  Inject,
   Post,
+  Query,
   Req,
+  Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBearerAuth,
@@ -17,13 +20,19 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import * as jwt from 'jsonwebtoken';
 import { AuthService } from '../services/auth.service';
-import { RefreshTokenDto } from '../utils/token.dto';
+import { RefreshTokenDto } from '../utils/dto/token.dto';
+import { VendorService } from '../services/vendor.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    @Inject(forwardRef(() => VendorService))
+    private readonly vendorService: VendorService,
+  ) {}
 
   @Post('login')
   @ApiOperation({ summary: 'Sign in with username and password' })
@@ -33,7 +42,7 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        username: {
+        identifier: {
           type: 'String',
           example: 'admin',
           description: 'this is username',
@@ -80,16 +89,13 @@ export class AuthController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Login with Google' })
-  async googleAuth(@Req() req) {
-    return this.authService.googleLogin(req);
-  }
+  async googleAuth(@Req() req) {}
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Google Auth Callback' })
   googleAuthRedirect(@Req() req) {
-    return  this.authService.googleLogin(req);
-    ;
+    return this.authService.googleLogin(req);
   }
   // Facebook login route
   @Get('facebook')
@@ -105,10 +111,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Facebook Auth Callback' })
   facebookAuthRedirect(@Req() req) {
     // After Facebook redirects back to your site
-    return {
-      message: 'Facebook Authentication successful',
-      user: req.user,
-    };
+    return this.authService.facebookLogin(req);
   }
 
   // Optional endpoint for showing the Facebook user info
@@ -121,5 +124,19 @@ export class AuthController {
       message: 'User information from Facebook',
       user: req.user,
     };
+  }
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string, @Res() res) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const userId = decoded['userId'];
+
+      // Activate user account
+      await this.vendorService.verifyEmail(userId);
+
+      return res.send('Email successfully verified!');
+    } catch (error) {
+      return res.status(400).send('Invalid or expired token.');
+    }
   }
 }
