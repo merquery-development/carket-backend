@@ -22,8 +22,8 @@ import {
 } from '@nestjs/swagger';
 import * as jwt from 'jsonwebtoken';
 import { AuthService } from '../services/auth.service';
-import { RefreshTokenDto } from '../utils/dto/token.dto';
 import { VendorService } from '../services/vendor.service';
+import { RefreshTokenDto } from '../utils/dto/token.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -34,8 +34,8 @@ export class AuthController {
     private readonly vendorService: VendorService,
   ) {}
 
-  @Post('login')
-  @ApiOperation({ summary: 'Sign in with username and password' })
+  @Post('login-vendor')
+  @ApiOperation({ summary: 'Sign in with username or email and password' })
   @ApiResponse({ status: 200, description: 'Successfully signed in' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiBody({
@@ -56,10 +56,41 @@ export class AuthController {
     },
   })
   @HttpCode(200)
-  signIn(@Body() signInDto: Record<string, any>) {
-    return this.authService.signIn(signInDto.username, signInDto.password);
+  signInVendor(@Body() signInDto: Record<string, any>) {
+    return this.authService.signInVendor(
+      signInDto.identifier,
+      signInDto.password,
+    );
   }
 
+  @Post('login-customer')
+  @ApiOperation({ summary: 'Sign in with username or email and password' })
+  @ApiResponse({ status: 200, description: 'Successfully signed in' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        identifier: {
+          type: 'String',
+          example: 'admin',
+          description: 'this is username',
+        },
+        password: {
+          type: 'String',
+          example: 'adminx',
+          description: 'this is password',
+        },
+      },
+    },
+  })
+  @HttpCode(200)
+  signInCustomer(@Body() signInDto: Record<string, any>) {
+    return this.authService.signInCustomer(
+      signInDto.identifier,
+      signInDto.password,
+    );
+  }
   @Post('refresh')
   @HttpCode(200)
   @ApiOperation({ summary: 'Refresh access token using refresh token' })

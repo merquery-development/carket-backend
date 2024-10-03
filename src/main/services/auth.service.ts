@@ -27,7 +27,7 @@ export class AuthService {
     });
     return token;
   }
-  async signIn(identifier: string, pass: string) {
+  async signInVendor(identifier: string, pass: string) {
     let vendor;
 
     // ตรวจสอบว่า identifier มีเครื่องหมาย '@' หรือไม่
@@ -67,6 +67,60 @@ export class AuthService {
       uid: vendor.uid,
       username: vendor.username,
       email: vendor.email,
+    };
+    const accessToken = this.jwtService.sign(payload, {
+      secret: process.env.ACCESS_TOKEN_SECRET,
+      expiresIn: '15m',
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: process.env.REFRESH_TOKEN_SECRET,
+      expiresIn: '1d',
+    });
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+  async signInCustomer(identifier: string, pass: string) {
+    let customer;
+
+    // ตรวจสอบว่า identifier มีเครื่องหมาย '@' หรือไม่
+    if (identifier.includes('@')) {
+      // ถ้ามี '@' ให้ถือว่าเป็น email
+      customer = await this.customerService.getCustomerByEmail(identifier);
+    } else {
+      // ถ้าไม่มี '@' ให้ถือว่าเป็น username
+      customer = await this.customerService.getCustomerByName(identifier);
+    }
+    if (!customer) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+
+    
+    if (!customer.isEnable) {
+      throw new UnauthorizedException('User is not enabled');
+    }
+
+    if (!customer) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+    if (isHashedPassword(pass)) {
+      throw new HttpException(
+        'Can not use hash password to login',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+    const match = await isMatch(pass, customer.password);
+
+    if (!match) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+
+    await this.vendorService.updateLastLogin(customer.uid);
+    const payload = {
+      uid: customer.uid,
+      username: customer.username,
+      email: customer.email,
     };
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.ACCESS_TOKEN_SECRET,

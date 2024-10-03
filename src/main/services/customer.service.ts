@@ -20,7 +20,6 @@ export class CustomerService {
 
     const result = await this.prisma.customer.create({
       data: {
-       
         username: createCustomerDto.username || null, // username อาจเป็น null หากเป็น OAuth
         email: createCustomerDto.email, // email ต้องมาจาก OAuth หรือการลงทะเบียนปกติ
         uid: uid,
@@ -43,5 +42,23 @@ export class CustomerService {
     }
 
     return { message: 'Customer created successfully' };
+  }
+  async getCustomerByName(username: string) {
+    const result = await this.prisma.customer.findFirst({
+      where: {
+        username: username,
+      },
+    });
+
+    return result;
+  }
+  async getCustomerByEmail(email: string) {
+    const result = this.prisma.customer.findFirst({
+      where: {
+        email: email,
+      },
+    });
+
+    return result;
   }
 }

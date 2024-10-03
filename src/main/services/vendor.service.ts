@@ -8,7 +8,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
 import { CreateVendorUserDto } from '../utils/dto/vendor.dto';
-import { firstPartUid } from '../utils/pagination';
+import { firstPartUid, getPagination } from '../utils/pagination';
 import { AuthService } from './auth.service';
 import { MailerService } from './mailer.service';
 @Injectable()
@@ -24,14 +24,73 @@ export class VendorService {
     const saltRounds = 10;
     return await bcrypt.hash(password, saltRounds);
   }
+
+  async getVendors({
+    page = null,
+    pageSize = null,
+    name,
+    sortBy = 'createdAt', // Default sort field
+    sortOrder = 'asc', // Default sort order
+  }: {
+    page?: number | null;
+    pageSize?: number | null;
+    name?: string;
+    sortBy?: string; // Field to sort by
+    sortOrder?: 'asc' | 'desc'; // Sort direction
+  }) {
+    const { skip, take } = getPagination(page, pageSize);
+    const where = {
+      deletedAt: null, // Ensure `deletedAt` is null
+      ...(name ? { name: { contains: name } } : {}), // Conditionally add username filter
+    };
+
+    const [vendor, total] = await Promise.all([
+      this.prisma.vendor.findMany({
+        skip,
+        take,
+        where,
+        orderBy: {
+          [sortBy]: sortOrder, // Dynamic sort field and direction
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          address: true,
+
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      this.prisma.vendor.count({
+        where,
+      }),
+    ]);
+
+    try {
+      const data = {
+        vendor,
+        total,
+        page: page || 1,
+        pageSize: pageSize || total, // Set pageSize to total if null, showing all records
+      };
+
+      return data;
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.NOT_FOUND);
+    }
+  }
   async createVendorUser(createVendorUser: CreateVendorUserDto) {
     try {
       let hashedPassword;
-      const existVendorUsername = await this.getVendorByName(createVendorUser.username);
-      const existVendorEmail = await this.getVendorByEmail(createVendorUser.email);
+      const existVendorUsername = await this.getVendorByName(
+        createVendorUser.username,
+      );
+      const existVendorEmail = await this.getVendorByEmail(
+        createVendorUser.email,
+      );
       if (existVendorUsername || existVendorEmail) {
-    
-        
         throw new HttpException('User already exist', HttpStatus.BAD_REQUEST);
       }
       const uid = firstPartUid();
@@ -39,7 +98,7 @@ export class VendorService {
       if (createVendorUser.password) {
         hashedPassword = await this.hashPassword(createVendorUser.password);
       }
-  
+
       const result = await this.prisma.vendorUser.create({
         data: {
           vendorId: createVendorUser.vendorId, // vendorId จะเป็น null หากมาจาก OAuth
@@ -56,7 +115,7 @@ export class VendorService {
       });
       const verificationToken =
         await this.authService.generateEmailVerificationToken(result.uid);
-  
+
       // Send verification email
       await this.mailerService.sendVerificationEmail(
         result.email,
@@ -68,17 +127,16 @@ export class VendorService {
           HttpStatus.BAD_REQUEST,
         );
       }
-  
+
       return { message: 'User created successfully' };
     } catch (error) {
       console.log(error);
-      
+
       throw new HttpException(
         'Error while creating vendor user',
         HttpStatus.BAD_REQUEST,
       );
     }
-  
   }
   catch(error) {
     throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
