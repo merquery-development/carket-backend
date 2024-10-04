@@ -25,7 +25,7 @@ model VendorUser {
   vendorId           Int? // เปลี่ยนเป็น nullable
   username           String? // อนุญาตให้เป็น null ได้
   email              String? // อนุญาตให้เป็น null ได้
-  isEmailVerified    Boolean? @default(false)@map("is_email_verified")
+  isEmailVerified    Boolean?  @default(false) @map("is_email_verified")
   mobileNumber       String?   @map("mobile_number") // เบอร์โทรศัพท์มือถือ
   lastLogin          DateTime? @map("last_login")
   nickName           String?   @map(" nick_name")
@@ -95,6 +95,7 @@ model Car {
   categoryId     Int
   brandId        Int
   modelId        Int
+  mileage        Int? // New field for mileage (เลขไมล์)
   year           Int
   specifications Json?
   basePrice      Decimal
@@ -113,6 +114,7 @@ model CarPost {
   vendorId              Int
   price                 Decimal
   year                  Int
+  mileage               Int // New field for mileage (เลขไมล์)
   overrideSpecification Json
   isDiscount            Boolean
   preDiscountPrice      Decimal
@@ -133,6 +135,7 @@ model Category {
 
 model Brand {
   id        Int      @id @default(autoincrement())
+  logo      String?
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   cars      Car[]
