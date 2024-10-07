@@ -61,4 +61,16 @@ export class CustomerService {
 
     return result;
   }
+
+  async getCustomerByUid(uid: string){
+    const result = await this.prisma.customer.findFirst({
+      where: {
+        uid: uid,
+      },
+    });
+    if (!result) {
+      throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);
+    }
+    return result;
+  }
 }

@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { CreateCarDto } from '../utils/car.dto';
+import { CreateCarDto } from '../utils/dto/car.dto';
 import { getPagination } from '../utils/pagination';
 
 @Injectable()
@@ -38,22 +38,21 @@ export class CarService {
           id: true,
           year: true,
           mileage: true,
-          Category :{
+          Category: {
             select: {
               name: true,
             },
           },
-          Brand : {
+          Brand: {
             select: {
               name: true,
             },
           },
-          Model : {
+          Model: {
             select: {
               name: true,
             },
-          }
-
+          },
         },
       }),
       this.prisma.car.count({
@@ -74,7 +73,7 @@ export class CarService {
       throw new HttpException(error, HttpStatus.NOT_FOUND);
     }
   }
-  async getRecommendedCars(amount : number) {
+  async getRecommendedCars(amount: number) {
     const cars = await this.prisma.car.findMany({
       orderBy: {
         id: 'asc', // เพื่อให้การค้นหาไม่ชนกันกับ random
@@ -100,10 +99,9 @@ export class CarService {
         },
       },
     });
-  
-   
+
     const randomCars = cars.sort(() => 0.5 - Math.random()).slice(0, amount);
-  
+
     return randomCars;
   }
   async createCar(createCarDto: CreateCarDto) {

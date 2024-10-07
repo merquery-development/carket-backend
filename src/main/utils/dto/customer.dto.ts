@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsDate,
@@ -31,26 +31,28 @@ export class CreateCustomerDto {
   })
   oauthUserData: object;
   @IsString()
-  @IsOptional() // username ไม่จำเป็นหากเป็น OAuth
+  @ApiPropertyOptional()
   @ApiProperty({
     example: 'testuser',
     required: false,
   })
   username: string;
   @IsString()
-  @IsOptional() // username ไม่จำเป็นหากเป็น OAuth
+  @IsOptional()
   @ApiProperty({
     example: 'Surapong',
     required: false,
   })
   firstname: string;
+
   @IsString()
-  @IsOptional() // username ไม่จำเป็นหากเป็น OAuth
+  @IsOptional()
   @ApiProperty({
     example: 'Chamalai',
     required: false,
   })
   lastname: string;
+
   @IsEmail()
   @IsOptional() // email ไม่จำเป็นหากเป็น OAuth
   @ApiProperty({
@@ -60,17 +62,10 @@ export class CreateCustomerDto {
   email: string;
 
   @IsString()
-  @IsOptional() // password ไม่จำเป็นหากเป็น OAuth
+  @ApiPropertyOptional()
   @ApiProperty({
     example: 'testpassword',
     required: false,
   })
   password: string;
-  @IsDate()
-  @IsOptional()
-  @ApiProperty({
-    example: new Date(),
-    required: false,
-  })
-  updateAt: Date;
 }

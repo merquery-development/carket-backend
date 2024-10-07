@@ -195,55 +195,120 @@ export class AuthService {
   }
   async googleLogin(req) {
     if (!req.user) {
-      return 'No user from google';
+      return 'No user from Google';
     }
-    // ตรวจสอบว่าผู้ใช้นี้มาจาก OAuth หรือไม่
+  
+    let customer = await this.customerService.getCustomerByEmail(req.user.email);
+    
     const oauthUserData = req.user || {}; // ข้อมูลจาก OAuth
     const oauthType = 'Google';
-    await this.customerService.createCustomer({
-      username: req.user.username || null, // username อาจเป็น null
-      firstname: req.user.firstname,
-      lastname: req.user.lastname || null,
-      email: req.user.email, // รับค่า email จาก OAuth
-      password: null, // ไม่ต้องมี password ในกรณีของ OAuth
-
-      isOauth: true, // ระบุว่าเป็น OAuth user
-      oauthType: oauthType,
-      oauthUserData: oauthUserData,
-      updateAt: new Date(),
-    });
+  
+    if (!customer) {
+      // ถ้ายังไม่มีบัญชี ให้สร้างใหม่
+       await this.customerService.createCustomer({
+        username: req.user.username || null, // username อาจเป็น null
+        firstname: req.user.firstname,
+        lastname: req.user.lastname || null,
+        email: req.user.email, // รับค่า email จาก OAuth
+        password: null, // ไม่ต้องมี password ในกรณีของ OAuth
+        isOauth: true, // ระบุว่าเป็น OAuth user
+        oauthType: oauthType,
+        oauthUserData: oauthUserData,
+      });
+    } else if (customer.isOauth && customer.oauthType === oauthType) {
+      // ถ้ามีบัญชีอยู่แล้วและเป็น OAuth จาก Google ให้ sign in เลย
+      const payload = {
+        uid: customer.uid,
+        username: customer.username,
+        email: customer.email,
+      };
+      const accessToken = this.jwtService.sign(payload, {
+        secret: process.env.ACCESS_TOKEN_SECRET,
+        expiresIn: '15m',
+      });
+      const refreshToken = this.jwtService.sign(payload, {
+        secret: process.env.REFRESH_TOKEN_SECRET,
+        expiresIn: '1d',
+      });
+  
+      return {
+        message: 'User signed in via Google',
+        accessToken,
+        refreshToken,
+  
+      };
+    } else {
+      // ถ้ามีบัญชีอยู่แล้วแต่ไม่ใช่ OAuth หรือ OAuth จาก provider อื่น
+      throw new HttpException(
+        'Account exists with different authentication method',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+  
     return {
-      message: 'User information from Google',
+      message: 'User created and signed in via Google',
       user: req.user,
     };
   }
 
   async facebookLogin(req) {
     if (!req.user) {
-      return 'No user from facebook';
+      return 'No user from Facebook';
     }
+  
+    let customer = await this.customerService.getCustomerByEmail(req.user.email);
+    
     const oauthUserData = req.user || {}; // ข้อมูลจาก OAuth
     const oauthType = 'Facebook';
-
-    await this.customerService.createCustomer({
-      username: req.user.username || null, // username อาจเป็น null
-      firstname: req.user.firstname,
-      lastname: req.user.lastname || null,
-      email: req.user.email, // รับค่า email จาก OAuth
-      password: null, // ไม่ต้องมี password ในกรณีของ OAuth
-
-      isOauth: true, // ระบุว่าเป็น OAuth user
-      oauthType: oauthType,
-      oauthUserData: oauthUserData,
-      updateAt: new Date(),
-    });
+  
+    if (!customer) {
+      // ถ้ายังไม่มีบัญชี ให้สร้างใหม่
+        await this.customerService.createCustomer({
+        username: req.user.username || null, // username อาจเป็น null
+        firstname: req.user.firstname,
+        lastname: req.user.lastname || null,
+        email: req.user.email, // รับค่า email จาก OAuth
+        password: null, // ไม่ต้องมี password ในกรณีของ OAuth
+        isOauth: true, // ระบุว่าเป็น OAuth user
+        oauthType: oauthType,
+        oauthUserData: oauthUserData,
+      });
+    } else if (customer.isOauth && customer.oauthType === oauthType) {
+      // ถ้ามีบัญชีอยู่แล้วและเป็น OAuth จาก Facebook ให้ sign in เลย
+      const payload = {
+        uid: customer.uid,
+        username: customer.username,
+        email: customer.email,
+      };
+      const accessToken = this.jwtService.sign(payload, {
+        secret: process.env.ACCESS_TOKEN_SECRET,
+        expiresIn: '15m',
+      });
+      const refreshToken = this.jwtService.sign(payload, {
+        secret: process.env.REFRESH_TOKEN_SECRET,
+        expiresIn: '1d',
+      });
+  
+      return {
+        message: 'User signed in via Facebook',
+        accessToken,
+        refreshToken,
+   
+      };
+    } else {
+      // ถ้ามีบัญชีอยู่แล้วแต่ไม่ใช่ OAuth หรือ OAuth จาก provider อื่น
+      throw new HttpException(
+        'Account exists with different authentication method',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+  
     return {
-      message: 'User information from Facebook',
+      message: 'User created and signed in via Facebook',
       user: req.user,
     };
   }
 }
-
 function isHashedPassword(password: string): boolean {
   // bcrypt hashed passwords are 60 characters long and start with '$2a$' or '$2b$'
   const bcryptPattern = /^\$2[ayb]\$.{56}$/;

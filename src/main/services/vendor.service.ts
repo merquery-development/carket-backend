@@ -40,7 +40,7 @@ export class VendorService {
   }) {
     const { skip, take } = getPagination(page, pageSize);
     const where = {
-      deletedAt: null, // Ensure `deletedAt` is null
+     VendorUser:{ isEmailVerified : true, },
       ...(name ? { name: { contains: name } } : {}), // Conditionally add username filter
     };
 
@@ -58,7 +58,6 @@ export class VendorService {
           email: true,
           phone: true,
           address: true,
-
           createdAt: true,
           updatedAt: true,
         },
@@ -198,4 +197,6 @@ export class VendorService {
 
     return { message: 'update successfull' };
   }
+
+ 
 }

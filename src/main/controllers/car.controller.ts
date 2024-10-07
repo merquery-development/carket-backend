@@ -18,13 +18,14 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthGuard } from '../guards/auth.guard';
+import { Vendor } from '../guards/vendor.guard';
 import { CarService } from '../services/car.service';
-import { CreateCarDto } from '../utils/car.dto';
+import { CreateCarDto } from '../utils/dto/car.dto';
 @ApiTags('cars')
 @Controller('cars')
-// @ApiBearerAuth('defaultBearerAuth')
-// @UseGuards(AuthGuard)
+@ApiBearerAuth('defaultBearerAuth')
+// @UseGuards(Vendor)
+// @UseGuards(Vendor)
 export class CarController {
   constructor(private readonly carService: CarService) {}
 
@@ -106,12 +107,20 @@ export class CarController {
 
   @Get('recommended')
   @ApiOperation({ summary: 'Get recommended cars' }) // แสดงรายละเอียดของ API
-  @ApiQuery({ name: 'amount', required: true, type: Number, description: 'Number of cars to recommend' })
+  @ApiQuery({
+    name: 'amount',
+    required: true,
+    type: Number,
+    description: 'Number of cars to recommend',
+  })
   async getRecommendedCars(
     @Query('amount') amount: number, // รับจำนวนที่ต้องการแนะนำจาก query
   ) {
     if (!amount || amount <= 0) {
-      throw new HttpException('Amount must be greater than 0', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Amount must be greater than 0',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     try {

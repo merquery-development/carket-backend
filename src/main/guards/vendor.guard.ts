@@ -13,7 +13,7 @@ import { AuthService } from '../services/auth.service';
 import { VendorService } from '../services/vendor.service';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class Vendor implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly authService: AuthService,
@@ -32,27 +32,26 @@ export class AuthGuard implements CanActivate {
       });
       // 💡 We're assigning the payload to the request object here
       // so that we can access it in our route handlers
- 
-      
+
       request['vendor'] = payload;
     } catch {
       throw new UnauthorizedException('invalid token');
     }
-    
-  
+
     const profile = await this.authService.getProfile(token);
     if (!profile) {
       throw new HttpException('Profile not found', HttpStatus.UNAUTHORIZED);
     }
 
-   
-    const user = await this.vendorService.getVendorByuid(profile.uid).catch(error => {
-      throw new UnauthorizedException('Authguard error',error.message)
-    });   
-    
+    const user = await this.vendorService
+      .getVendorByuid(profile.uid)
+      .catch((error) => {
+        throw new UnauthorizedException('Authguard error', error.message);
+      });
+
     if (!user || !user.isEnable) {
       throw new UnauthorizedException('User is not enabled');
-    } 
+    }
     return true;
   }
 
