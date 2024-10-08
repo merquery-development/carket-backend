@@ -62,11 +62,5 @@ export class CreateVendorUserDto {
   roleId: number;
 
 
-  @IsDate()
-  @IsOptional()
-  @ApiProperty({
-    example: new Date(),
-    required: false,
-  })
-  updateAt: Date;
+
 }

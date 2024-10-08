@@ -199,11 +199,14 @@ export class AuthService {
     }
   
     let customer = await this.customerService.getCustomerByEmail(req.user.email);
-    
-    const oauthUserData = req.user || {}; // ข้อมูลจาก OAuth
+    if (customer.oauthType != 'Google') {
+      throw new HttpException('Already signup with other auth',HttpStatus.BAD_REQUEST)
+    }
+         const oauthUserData = req.user || {}; // ข้อมูลจาก OAuth
     const oauthType = 'Google';
+    if (!customer) { 
+
   
-    if (!customer) {
       // ถ้ายังไม่มีบัญชี ให้สร้างใหม่
        await this.customerService.createCustomer({
         username: req.user.username || null, // username อาจเป็น null
@@ -257,7 +260,11 @@ export class AuthService {
     }
   
     let customer = await this.customerService.getCustomerByEmail(req.user.email);
+
     
+    if (customer.oauthType != 'Facebook') {
+      throw new HttpException('Already signup with other auth',HttpStatus.BAD_REQUEST)
+    }
     const oauthUserData = req.user || {}; // ข้อมูลจาก OAuth
     const oauthType = 'Facebook';
   

@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { CreateCarDto } from '../utils/dto/car.dto';
 import { getPagination } from '../utils/pagination';
+import { Prisma } from '@prisma/client';
+import { CreateCarDto } from '../utils/dto/car.dto';
 
 @Injectable()
 export class CarService {
@@ -123,5 +123,24 @@ export class CarService {
     } catch (error) {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
+  }
+
+  async getAllBrand(){
+    try {
+        const result = this.prisma.brand.findMany()
+    return result
+    } catch (error) {
+      throw new HttpException(error,HttpStatus.BAD_REQUEST)
+    }
+  
+  }
+  async getAllCategory(){
+    try {
+        const result = this.prisma.category.findMany()
+    return result
+    } catch (error) {
+      throw new HttpException(error,HttpStatus.BAD_REQUEST)
+    }
+  
   }
 }

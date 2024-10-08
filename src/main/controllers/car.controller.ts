@@ -6,7 +6,6 @@ import {
   HttpStatus,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -18,14 +17,11 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { Vendor } from '../guards/vendor.guard';
 import { CarService } from '../services/car.service';
 import { CreateCarDto } from '../utils/dto/car.dto';
 @ApiTags('cars')
 @Controller('cars')
-@ApiBearerAuth('defaultBearerAuth')
-// @UseGuards(Vendor)
-// @UseGuards(Vendor)
+// @ApiBearerAuth('defaultBearerAuth')
 export class CarController {
   constructor(private readonly carService: CarService) {}
 
@@ -38,6 +34,7 @@ export class CarController {
   createCar(@Body() postData: CreateCarDto) {
     return this.carService.createCar(postData);
   }
+
   @Get('')
   @ApiOperation({ summary: 'Get All Data of Car require login' })
   @ApiOkResponse({
@@ -133,4 +130,31 @@ export class CarController {
       );
     }
   }
+@Get('brand')
+@ApiOperation({summary: 'Get all brand'})
+async getAllBrand(){
+  try {
+    const brands = await this.carService.getAllBrand()
+    return brands
+  } catch (error) {
+    throw new HttpException(
+      { message: 'Error fetching brand', error: error.message },
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+@Get('category')
+@ApiOperation({summary: 'Get all brand'})
+async getAllCategory(){
+  try {
+    const categories = await this.carService.getAllCategory()
+    return categories
+  } catch (error) {
+    throw new HttpException(
+      { message: 'Error fetching categories', error: error.message },
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+
 }

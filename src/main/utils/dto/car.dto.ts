@@ -29,5 +29,5 @@ export class CreateCarDto {
   @ApiProperty({
     example: 200000.5,
   })
-  basePrice: Decimal;
+  basePrice: number;
 }

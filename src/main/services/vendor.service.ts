@@ -40,7 +40,9 @@ export class VendorService {
   }) {
     const { skip, take } = getPagination(page, pageSize);
     const where = {
-     VendorUser:{ isEmailVerified : true, },
+      users: {
+        some: { isEmailVerified: true }, // Ensure at least one verified user
+      },
       ...(name ? { name: { contains: name } } : {}), // Conditionally add username filter
     };
 

@@ -1,20 +1,20 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AppService } from '../app.service';
 import { PrismaService } from '../prisma.service';
 import { AuthController } from './controllers/auth.controller';
+import { CustomerController } from './controllers/customer.controller';
 import { VendorController } from './controllers/vendor.controller';
 import { AuthService } from './services/auth.service';
-import { VendorService } from './services/vendor.service';
-import { GoogleStrategy } from './utils/strategy/google.strategy';
-import { ConfigModule } from '@nestjs/config';
-import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { CarService } from './services/car.service';
-import { CarController } from './controllers/car.controller';
-import { MailerService } from './services/mailer.service';
 import { CustomerService } from './services/customer.service';
-import { CustomerController } from './controllers/customer.controller';
+import { MailerService } from './services/mailer.service';
+import { VendorService } from './services/vendor.service';
+import { FacebookStrategy } from './utils/strategy/facebook.stategy';
+import { GoogleStrategy } from './utils/strategy/google.strategy';
+import { CarController } from './controllers/car.controller';
 @Module({
   imports: [
     PassportModule,
@@ -31,7 +31,12 @@ import { CustomerController } from './controllers/customer.controller';
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [VendorController, AuthController,CarController,CustomerController],
+  controllers: [
+    VendorController,
+    AuthController,
+    CarController,
+    CustomerController,
+  ],
   providers: [
     AppService,
     PrismaService,
@@ -41,7 +46,7 @@ import { CustomerController } from './controllers/customer.controller';
     FacebookStrategy,
     CarService,
     MailerService,
-    CustomerService
+    CustomerService,
   ],
 })
 export class MainModule {}

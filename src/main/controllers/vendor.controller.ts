@@ -37,7 +37,6 @@ export class VendorController {
     return this.vendorService.getVendorByuid(uid);
   }
   @Get('vendor')
-  // @Permissions(Permission_Enum.ViewStaff)
   @HttpCode(200)
   @ApiOperation({ summary: 'Get All Data of vendor require login' })
   @ApiOkResponse({
