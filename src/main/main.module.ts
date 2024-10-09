@@ -15,6 +15,8 @@ import { VendorService } from './services/vendor.service';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
 import { CarController } from './controllers/car.controller';
+import { FileUploadController } from './controllers/file.controller';
+import { FileUploadService } from './services/file.service';
 @Module({
   imports: [
     PassportModule,
@@ -36,6 +38,7 @@ import { CarController } from './controllers/car.controller';
     AuthController,
     CarController,
     CustomerController,
+    FileUploadController
   ],
   providers: [
     AppService,
@@ -47,6 +50,7 @@ import { CarController } from './controllers/car.controller';
     CarService,
     MailerService,
     CustomerService,
+    FileUploadService
   ],
 })
 export class MainModule {}

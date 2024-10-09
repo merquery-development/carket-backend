@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Decimal } from '@prisma/client/runtime/library';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 
 export class CreateCarDto {
   @ApiProperty({
@@ -30,4 +30,10 @@ export class CreateCarDto {
     example: 200000.5,
   })
   basePrice: number;
+}
+
+export class UploadCarPicturesDto {
+  @IsNotEmpty()
+  @IsNumber()
+  carId: number;
 }

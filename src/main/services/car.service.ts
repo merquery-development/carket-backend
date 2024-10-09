@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
-import { getPagination } from '../utils/pagination';
 import { Prisma } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
 import { CreateCarDto } from '../utils/dto/car.dto';
+import { getPagination } from '../utils/pagination';
 
 @Injectable()
 export class CarService {
@@ -125,22 +125,66 @@ export class CarService {
     }
   }
 
-  async getAllBrand(){
+  async getAllBrand() {
     try {
-        const result = this.prisma.brand.findMany()
-    return result
+      const result = this.prisma.brand.findMany();
+      return result;
     } catch (error) {
-      throw new HttpException(error,HttpStatus.BAD_REQUEST)
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
-  
   }
-  async getAllCategory(){
+  async getAllCategory() {
     try {
-        const result = this.prisma.category.findMany()
-    return result
+      const result = this.prisma.category.findMany();
+      return result;
     } catch (error) {
-      throw new HttpException(error,HttpStatus.BAD_REQUEST)
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
-  
+  }
+
+  async getCarById(id: string) {
+    try {
+      const result = this.prisma.carPost.findFirst({
+        where: {
+          id: Number(id),
+        },
+      });
+      return result;
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+  async updateBrandLogo(brandId: number, logoName: string, logoPath: string) {
+    await this.prisma.brand.update({
+      where: { id: brandId },
+      data: {
+        logoName: logoName,
+        logoPath: logoPath,
+      },
+    });
+  }
+
+  async updateCategoryLogo(
+    categoryId: number,
+    logoName: string,
+    logoPath: string,
+  ) {
+    await this.prisma.category.update({
+      where: { id: categoryId },
+      data: {
+        logoName: logoName,
+        logoPath: logoPath,
+      },
+    });
+  }
+  async updateCarPicture(carId: number, pictureName: string, picturePath: string) {
+    await this.prisma.carPicture.create({
+      data: {
+        carId,
+        pictureName,
+        picturePath,
+        type: 'car',
+      },
+    });
   }
 }

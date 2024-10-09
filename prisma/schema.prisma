@@ -128,6 +128,8 @@ model CarPost {
 
 model Category {
   id        Int      @id @default(autoincrement())
+  logoName  String?  @map("logo_name")
+  logoPath  String?  @map("logo_path")
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   cars      Car[]
@@ -135,7 +137,8 @@ model Category {
 
 model Brand {
   id        Int      @id @default(autoincrement())
-  logo      String?
+  logoName  String?  @map("logo_name")
+  logoPath  String?  @map("logo_path")
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   cars      Car[]
@@ -152,12 +155,13 @@ model Model {
 }
 
 model CarPicture {
-  id         Int      @id @default(autoincrement())
-  carId      Int
-  type       String
-  pictureUrl String
-  createdAt  DateTime @default(now()) @map("created_at")
-  car        CarPost  @relation(fields: [carId], references: [id])
+  id          Int      @id @default(autoincrement())
+  carId       Int
+  type        String
+  pictureName String   @map("picture_name")
+  picturePath String   @map("picture_path")
+  createdAt   DateTime @default(now()) @map("created_at")
+  car         CarPost  @relation(fields: [carId], references: [id])
 }
 
 model UserCarView {
