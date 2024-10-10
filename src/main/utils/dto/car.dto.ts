@@ -34,6 +34,6 @@ export class CreateCarDto {
 
 export class UploadCarPicturesDto {
   @IsNotEmpty()
-  @IsNumber()
-  carId: number;
+
+  carId: string;
 }

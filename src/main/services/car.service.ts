@@ -187,4 +187,10 @@ export class CarService {
       },
     });
   }
+
+  async getAllCarPics(carId : number){
+   return await this.prisma.carPicture.findMany({
+      where : {carId : carId}
+    })
+  }
 }

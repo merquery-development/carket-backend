@@ -4,6 +4,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Param,
   Post,
   Query,
 } from '@nestjs/common';
@@ -14,11 +15,13 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { CarService } from '../services/car.service';
 import { CreateCarDto } from '../utils/dto/car.dto';
+import { log } from 'console';
 @ApiTags('cars')
 @Controller('cars')
 // @ApiBearerAuth('defaultBearerAuth')
@@ -155,6 +158,15 @@ async getAllCategory(){
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
+}
+@Get('car-pic/carId/:carId')
+@ApiOperation({summary: 'Get all carpic'})
+
+async getAllCarPics(@Param('carId')carId : string)
+{
+  console.log(carId);
+  
+  return this.carService.getAllCarPics(Number(carId))
 }
 
 }
