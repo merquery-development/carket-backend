@@ -193,4 +193,20 @@ export class CarService {
       where : {carId : carId}
     })
   }
+
+  async getCategoryLogoById(id: number){
+    return await this.prisma.category.findFirst({
+      where : {
+        id : id
+      }
+    })
+  }
+  async getBrandLogoById(id: number){
+    return await this.prisma.category.findFirst({
+      where : {
+        id : id
+      }
+    })
+  }
+
 }

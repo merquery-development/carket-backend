@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
 
 export class CreateCarDto {
   @ApiProperty({
@@ -34,6 +34,9 @@ export class CreateCarDto {
 
 export class UploadCarPicturesDto {
   @IsNotEmpty()
-
   carId: string;
+}
+export class UploadLogoDto {
+  type: 'brand' | 'category';
+  id: number;
 }

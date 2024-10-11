@@ -1,4 +1,9 @@
-import { PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3,
+  S3ClientConfig,
+} from '@aws-sdk/client-s3';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthService } from './auth.service';
@@ -101,6 +106,7 @@ export class FileUploadService {
     let fileExtension: string;
     let fileBuffer: Buffer;
 
+    // ตรวจสอบรูปแบบของไฟล์และจัดการข้อมูลไฟล์
     if (file instanceof Buffer) {
       fileBuffer = file;
       fileExtension = 'png'; // Default to PNG for Buffer input
@@ -112,6 +118,7 @@ export class FileUploadService {
     const allowedExtensions = ['jpg', 'jpeg', 'png'];
     const maxSizeInBytes = 500 * 1024; // 500KB
 
+    // ตรวจสอบขนาดไฟล์
     if (fileBuffer.length > maxSizeInBytes) {
       throw new HttpException(
         'File size exceeds 500KB limit.',
@@ -119,6 +126,7 @@ export class FileUploadService {
       );
     }
 
+    // ตรวจสอบประเภทไฟล์
     if (!allowedExtensions.includes(fileExtension)) {
       throw new HttpException(
         'Invalid file type. Only jpg, jpeg, and png are allowed.',
@@ -126,7 +134,7 @@ export class FileUploadService {
       );
     }
 
-    // Set folder path for brand or category
+    // กำหนดพาธโฟลเดอร์สำหรับเก็บโลโก้ตามประเภท
     let folderPath: string;
     if (type === 'brand') {
       folderPath = 'logos/brand';
@@ -138,6 +146,26 @@ export class FileUploadService {
     const key = `${folderPath}/${imageName}`;
 
     try {
+      // ตรวจสอบว่ามีรูปเก่าอยู่หรือไม่
+      let oldLogo
+      if (type === 'brand') {
+        oldLogo = await this.carService.getBrandLogoById(id); // ดึงชื่อไฟล์รูปเก่าจากฐานข้อมูล
+      } else if (type === 'category') {
+        oldLogo = await this.carService.getCategoryLogoById(id);
+      }
+
+      // ลบรูปเก่าออก (ถ้ามี)
+      if (oldLogo) {
+        const oldKey = `${folderPath}/${oldLogo}`;
+        await this.s3.send(
+          new DeleteObjectCommand({
+            Bucket: process.env.BUCKET,
+            Key: oldKey,
+          }),
+        );
+      }
+
+      // อัปโหลดรูปใหม่
       const command = new PutObjectCommand({
         Bucket: process.env.BUCKET,
         Key: key,
@@ -147,10 +175,10 @@ export class FileUploadService {
 
       await this.s3.send(command);
 
+      // อัปเดตโลโก้ในฐานข้อมูล
       const envUrl = process.env.S3_PUBLIC_URL || 'https://your-r2-public-url';
       const imageUrl = `${envUrl}/${key}`;
 
-      // Update brand or category in the database
       if (type === 'brand') {
         await this.carService.updateBrandLogo(id, imageName, folderPath);
       } else if (type === 'category') {
