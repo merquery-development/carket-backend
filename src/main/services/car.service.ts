@@ -167,12 +167,14 @@ export class CarService {
   async updateCategoryLogo(
     categoryId: number,
     logoName: string,
+    logoActiveName: string,
     logoPath: string,
   ) {
     await this.prisma.category.update({
       where: { id: categoryId },
       data: {
         logoName: logoName,
+        logoNameActive: logoActiveName,
         logoPath: logoPath,
       },
     });

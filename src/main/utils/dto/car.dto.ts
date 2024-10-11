@@ -36,7 +36,13 @@ export class UploadCarPicturesDto {
   @IsNotEmpty()
   carId: string;
 }
-export class UploadLogoDto {
-  type: 'brand' | 'category';
-  id: number;
+export class UploadCategoryDto {
+  id: number; // ID ของหมวดหมู่
+
+  logo: Express.Multer.File; // โลโก้ธรรมดา
+
+  logoActive: Express.Multer.File; // โลโก้ active
+}
+export class UploadBrandDto {
+  id: number; // ID ของหมวดหมู่
 }

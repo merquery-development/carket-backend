@@ -6,7 +6,6 @@ import {
   HttpStatus,
   Inject,
   Post,
-  Req,
   UploadedFile,
   UploadedFiles,
   UseInterceptors,
@@ -22,7 +21,11 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
 import { FileUploadService } from '../services/file.service';
-import { UploadCarPicturesDto, UploadLogoDto } from '../utils/dto/car.dto';
+import {
+  UploadBrandDto,
+  UploadCarPicturesDto,
+  UploadCategoryDto,
+} from '../utils/dto/car.dto';
 @ApiBearerAuth('defaultBearerAuth')
 @ApiTags('upload')
 @Controller('upload')
@@ -57,7 +60,6 @@ export class FileUploadController {
   async uploadCarPictures(
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Body() body: UploadCarPicturesDto,
-    @Req() request: Request,
   ) {
     try {
       // ตรวจสอบว่าได้รับไฟล์และ carId หรือไม่
@@ -81,55 +83,106 @@ export class FileUploadController {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
-  @Post('logo')
-  @UseInterceptors(FileInterceptor('file')) // Interceptor สำหรับไฟล์เดียว
-  @ApiOperation({ summary: 'Upload a logo for a brand or category' })
+  @Post('category-logo')
+  @ApiOperation({ summary: 'Upload normal and active logos for category' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Upload a logo for brand or category',
+    description: 'Upload logos for category',
     schema: {
       type: 'object',
       properties: {
-        type: {
-          type: 'string',
-          enum: ['brand', 'category'], // เลือกได้เฉพาะ brand หรือ category
-        },
-        id: { type: 'integer' }, // รวม id ของ brand หรือ category ในฟอร์ม-data
-        file: {
-          type: 'string',
-          format: 'binary', // ระบุว่า file เป็น binary
-        },
+        logo: { type: 'string', format: 'binary' }, // โลโก้ธรรมดา
+        logoActive: { type: 'string', format: 'binary' }, // โลโก้ตอน active
+        id: { type: 'integer' }, // ID ของหมวดหมู่
       },
     },
   })
   @ApiResponse({
     status: 200,
-    description: 'Logo successfully uploaded',
+    description: 'Logos uploaded successfully',
   })
-  async uploadLogo(
-    @UploadedFile() file: Express.Multer.File, // รับไฟล์เดียว
-    @Body() body: UploadLogoDto, // รับ type และ id
-  ): Promise<string> {
+  @ApiResponse({ status: 400, description: 'Invalid file or file too large' })
+  @ApiResponse({ status: 500, description: 'File upload failed' })
+  @UseInterceptors(AnyFilesInterceptor()) // ใช้ AnyFilesInterceptor สำหรับการรับไฟล์
+  async uploadCategoryLogo(
+    @Body() body: UploadCategoryDto,
+    @UploadedFiles() files: Array<Express.Multer.File>, // รับไฟล์ทั้งหมด
+  ) {
     try {
-      // ตรวจสอบว่าได้รับไฟล์และ id หรือไม่
-      if (!file) {
-        throw new HttpException('No file uploaded', HttpStatus.BAD_REQUEST);
-      }
+      // ตรวจสอบว่าได้รับไฟล์โลโก้หรือไม่
+      const logo = files.find((file) => file.fieldname === 'logo'); // โลโก้ธรรมดา
+      const logoActive = files.find((file) => file.fieldname === 'logoActive'); // โลโก้ active
 
-      if (!body.id) {
-        throw new HttpException('ID is required', HttpStatus.BAD_REQUEST);
+      if (!logo || !logoActive) {
+        throw new HttpException(
+          'Both logo and logoActive files are required',
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       // เรียกใช้ service เพื่ออัปโหลดโลโก้
-      const imageUrl = await this.fileUploadService.uploadBrandOrCategoryLogo(
-        file,
-        body.type,
-        body.id,
+      const result = await this.fileUploadService.uploadCategoryLogo(
+        Number(body.id),
+        logo,
+        logoActive,
       );
 
-      return imageUrl; // ส่ง URL ของโลโก้ที่อัปโหลดกลับไป
+      return result;
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        error.message || 'File upload failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  @Post('brand-logo')
+  @UseInterceptors(FileInterceptor('logo')) // ใช้ FileInterceptor สำหรับการรับไฟล์
+  @ApiOperation({ summary: 'Upload logo for brand' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Upload logo for brand',
+    type: 'multipart/form-data',
+    schema: {
+      type: 'object',
+      properties: {
+        logo: { type: 'string', format: 'binary' }, // โลโก้แบรนด์
+        id: { type: 'integer' }, // ID ของหมวดหมู่
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Logo uploaded successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid file or file too large' })
+  @ApiResponse({ status: 500, description: 'File upload failed' })
+  async uploadBrandLogo(
+    @Body() body: UploadBrandDto, // รับข้อมูลจาก body
+    @UploadedFile() logo: Express.Multer.File, // รับไฟล์โลโก้
+  ) {
+    try {
+     
+
+      // ตรวจสอบว่าได้รับไฟล์โลโก้หรือไม่
+      if (!logo) {
+        throw new HttpException(
+          'Logo file is required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // เรียกใช้ service เพื่ออัปโหลดโลโก้
+      const result = await this.fileUploadService.uploadBrandLogo(
+        Number(body.id),
+        logo,
+      );
+
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'File upload failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }
