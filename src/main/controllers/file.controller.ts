@@ -84,7 +84,7 @@ export class FileUploadController {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
-  @Post('upload/:type/:id')
+  @Post(':type/:id')
   @ApiOperation({ summary: 'Upload a logo for a brand or category' })
   @ApiConsumes('multipart/form-data')
   @ApiParam({
@@ -93,6 +93,17 @@ export class FileUploadController {
     description: 'Specify whether to upload a brand or category logo',
   })
   @ApiParam({ name: 'id', description: 'The ID of the brand or category' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Logo successfully uploaded',
