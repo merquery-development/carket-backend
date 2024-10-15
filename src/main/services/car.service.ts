@@ -11,22 +11,37 @@ export class CarService {
   async getCars({
     page = null,
     pageSize = null,
-    year,
+    brandId = null,
+    categoryId = null,
+    priceMin = null,
+    priceMax = null,
+    mileageMin = null,
+    mileageMax = null,
     sortBy = 'createdAt', // Default sort field
     sortOrder = 'asc', // Default sort order
   }: {
     page?: number | null;
     pageSize?: number | null;
-    year?: number;
-    sortBy?: string; // Field to sort by
-    sortOrder?: 'asc' | 'desc'; // Sort direction
+    brandId?: number | null;
+    categoryId?: number | null;
+    priceMin?: number | null;
+    priceMax?: number | null;
+    mileageMin?: number | null;
+    mileageMax?: number | null;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }) {
     const { skip, take } = getPagination(page, pageSize);
+  
+    // Dynamic where conditions based on filters
     const where = {
-      ...(year ? { year: { equals: year } } : {}),
+      ...(brandId ? { brandId: { equals: brandId } } : {}),
+      ...(categoryId ? { categoryId: { equals: categoryId } } : {}),
+      ...(priceMin !== null && priceMax !== null ? { basePrice: { gte: priceMin, lte: priceMax } } : {}),
+      ...(mileageMin !== null && mileageMax !== null ? { mileage: { gte: mileageMin, lte: mileageMax } } : {}),
     };
-
-    const [cars, total] = await Promise.all([
+  
+    const [cars, total, mileageStats, priceStats] = await Promise.all([
       this.prisma.car.findMany({
         skip,
         take,
@@ -38,6 +53,7 @@ export class CarService {
           id: true,
           year: true,
           mileage: true,
+          basePrice: true,
           Category: {
             select: {
               name: true,
@@ -55,23 +71,64 @@ export class CarService {
           },
         },
       }),
+  
+      // Get total count of cars
       this.prisma.car.count({
         where,
       }),
+  
+      // Get statistics for mileage (grouped by predefined ranges)
+      this.prisma.car.groupBy({
+        by: ['mileage'],
+        _count: true,
+        where,
+        orderBy: {
+          mileage: 'asc',
+        },
+        having: {
+          mileage: {
+            gte: mileageMin ?? 0,
+            lte: mileageMax ?? 1000000,
+          },
+        },
+      }),
+  
+      // Get statistics for price (grouped by predefined ranges)
+      this.prisma.car.groupBy({
+        by: ['basePrice'],
+        _count: true,
+        where,
+        orderBy: {
+          basePrice: 'asc',
+        },
+        having: {
+          basePrice: {
+            gte: priceMin ?? 0,
+            lte: priceMax ?? 10000000,
+          },
+        },
+      }),
     ]);
-
-    try {
-      const data = {
-        cars,
-        total,
-        page: page || 1,
-        pageSize: pageSize || total, // Set pageSize to total if null, showing all records
-      };
-
-      return data;
-    } catch (error) {
-      throw new HttpException(error, HttpStatus.NOT_FOUND);
-    }
+  
+    const data = {
+      cars,
+      total,
+      page: page || 1,
+      pageSize: pageSize || total, // Default to total if no pageSize is given
+  
+      // Send mileage and price statistics
+      mileageStats: mileageStats.map(stat => ({
+        mileage: stat.mileage,
+        count: stat._count,
+      })),
+  
+      priceStats: priceStats.map(stat => ({
+        price: stat.basePrice,
+        count: stat._count,
+      })),
+    };
+  
+    return data;
   }
   async getRecommendedCars(amount: number) {
     const cars = await this.prisma.car.findMany({

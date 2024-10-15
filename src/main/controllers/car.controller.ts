@@ -39,71 +39,121 @@ export class CarController {
   }
 
   @Get('')
-  @ApiOperation({ summary: 'Get All Data of Car require login' })
-  @ApiOkResponse({
-    description: 'All Car list',
-  })
-  @ApiNotFoundResponse({
-    description: 'result not found',
-  })
-  @ApiInternalServerErrorResponse({
-    description: 'Internal Server Error',
-  })
-  @ApiQuery({
-    name: 'year',
-    required: false,
-    type: String,
-    description: 'Filter by username',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: String,
-    description: 'Page number for pagination (nullable)',
-  })
-  @ApiQuery({
-    name: 'pageSize',
-    required: false,
-    type: String,
-    description: 'Number of items per page for pagination (nullable)',
-  })
-  @ApiQuery({
-    name: 'sortBy',
-    required: false,
-    type: String,
-    description: 'Field to sort by (e.g., createdAt)',
-  })
-  @ApiQuery({
-    name: 'sortOrder',
-    required: false,
-    type: String,
-    enum: ['asc', 'desc'],
-    description: 'Sort direction (asc or desc)',
-  })
-  async getCars(
-    @Query('page') page: number,
-    @Query('pageSize') pageSize: number,
-    @Query('year') year: number,
-    @Query('sortBy') sortBy: string,
-    @Query('sortOrder') sortOrder: 'asc' | 'desc',
-  ) {
-    try {
-      // เรียกใช้ service ที่เราเขียนไว้
-      const result = await this.carService.getCars({
-        page: page || null,
-        pageSize: pageSize || null,
-        year: year || null,
-        sortBy: sortBy || 'createdAt',
-        sortOrder: sortOrder || 'asc',
-      });
-      return result;
-    } catch (error) {
-      throw new HttpException(
-        { message: 'Error fetching car data', error: error.message },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+@ApiOperation({ summary: 'Get All Data of Car require login' })
+@ApiOkResponse({
+  description: 'All Car list',
+})
+@ApiNotFoundResponse({
+  description: 'result not found',
+})
+@ApiInternalServerErrorResponse({
+  description: 'Internal Server Error',
+})
+@ApiQuery({
+  name: 'year',
+  required: false,
+  type: Number,
+  description: 'Filter by year of the car',
+})
+@ApiQuery({
+  name: 'page',
+  required: false,
+  type: Number,
+  description: 'Page number for pagination (nullable)',
+})
+@ApiQuery({
+  name: 'pageSize',
+  required: false,
+  type: Number,
+  description: 'Number of items per page for pagination (nullable)',
+})
+@ApiQuery({
+  name: 'sortBy',
+  required: false,
+  type: String,
+  description: 'Field to sort by (e.g., createdAt)',
+})
+@ApiQuery({
+  name: 'sortOrder',
+  required: false,
+  type: String,
+  enum: ['asc', 'desc'],
+  description: 'Sort direction (asc or desc)',
+})
+@ApiQuery({
+  name: 'mileageMin',
+  required: false,
+  type: Number,
+  description: 'Minimum mileage to filter',
+})
+@ApiQuery({
+  name: 'mileageMax',
+  required: false,
+  type: Number,
+  description: 'Maximum mileage to filter',
+})
+@ApiQuery({
+  name: 'priceMin',
+  required: false,
+  type: Number,
+  description: 'Minimum price to filter',
+})
+@ApiQuery({
+  name: 'priceMax',
+  required: false,
+  type: Number,
+  description: 'Maximum price to filter',
+})
+@ApiQuery({
+  name: 'brandId',
+  required: false,
+  type: Number,
+  description: 'Filter by brand ID',
+})
+@ApiQuery({
+  name: 'categoryId',
+  required: false,
+  type: Number,
+  description: 'Filter by category ID',
+})
+async getCars(
+  @Query('page') page: number,
+  @Query('pageSize') pageSize: number,
+  @Query('year') year: number,
+  @Query('sortBy') sortBy: string,
+  @Query('sortOrder') sortOrder: 'asc' | 'desc',
+  @Query('mileageMin') mileageMin: number,
+  @Query('mileageMax') mileageMax: number,
+  @Query('priceMin') priceMin: number,
+  @Query('priceMax') priceMax: number,
+  @Query('brandId') brandId: number,
+  @Query('categoryId') categoryId: number,
+) {
+  try {
+    // เรียกใช้ service ที่เพิ่มฟังก์ชันการกรอง
+    const filterOptions = {
+      page: page || 1,
+      pageSize: pageSize || 10,
+      year: year || null,
+      sortBy: sortBy || 'createdAt',
+      sortOrder: sortOrder || 'asc',
+      mileageMin: mileageMin || null,
+      mileageMax: mileageMax || null,
+      priceMin: priceMin || null,
+      priceMax: priceMax || null,
+      brandId: brandId || null,
+      categoryId: categoryId || null,
+    };
+
+    const result = await this.carService.getCars(filterOptions);
+    return result;
+  } catch (error) {
+    throw new HttpException(
+      { message: 'Error fetching car data', error: error.message },
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
+}
 
   @Get('recommended')
   @ApiOperation({ summary: 'Get recommended cars' }) // แสดงรายละเอียดของ API
