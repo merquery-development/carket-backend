@@ -1,0 +1,41 @@
+name: Build and Push Docker Image to ghcr.io
+
+on:
+  push:
+    branches:
+      - develop # Trigger on push to develop branch
+  workflow_dispatch: # Allow manual triggering of the workflow
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read # Allows reading the contents of the repository
+      packages: write # Allows pushing the Docker image to GitHub Packages (ghcr.io)
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Log in to the GitHub Container Registry (ghcr.io)
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # Step 3: Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/carket-develop:${{ github.sha }} .
+
+      # Step 4: Push the Docker image to GitHub Container Registry
+      - name: Push Docker image to ghcr.io
+        run: |
+          docker push ghcr.io/${{ github.repository }}/carket-develop:${{ github.sha }}
+
+      # Optional: Add an additional step to tag the latest version
+      - name: Tag Docker image as latest
+        if: github.ref == 'refs/heads/develop' # Only tag as latest if on main branch
+        run: |
+          docker tag ghcr.io/${{ github.repository }}/carket-develop:${{ github.sha }} ghcr.io/${{ github.repository }}/carket-develop:latest
+          docker push ghcr.io/${{ github.repository }}/carket-develop:latest
