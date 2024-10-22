@@ -3,24 +3,21 @@ FROM node:20-alpine
 
 RUN apk update && apk add yarn curl bash make && rm -rf /var/cache/apk/*
 
-RUN curl -sfL https://install.goreleaser.com/github.com/tj/node-prune.sh | bash -s -- -b /usr/local/bin
-
 # Create app directory
 WORKDIR /usr/src/app
 
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
-COPY package*.json ./
+COPY package*.json yarn.lock ./
 
 
 RUN yarn
-
 RUN yarn prisma generate
+RUN yarn build
 
 # Bundle app source
 COPY . .
 
 # Creates a "dist" folder with the production build
-RUN npm run build
 
 EXPOSE 3000
 
