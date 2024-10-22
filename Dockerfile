@@ -1,5 +1,8 @@
 FROM node:20-alpine
 
+# ติดตั้ง Python, make, g++ สำหรับการคอมไพล์แพ็กเกจที่ต้องการ
+RUN apk add --no-cache python3 make g++
+
 # Create app directory
 WORKDIR /usr/src/app
 
