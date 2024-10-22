@@ -8,9 +8,11 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install app dependencies
-RUN npm install
+RUN npm install -g yarn
 
-RUN npx prisma generate
+RUN yarn
+
+RUN yarn prisma generate
 
 # Bundle app source
 COPY . .
