@@ -1,5 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsDateString,
+  IsDecimal,
+  IsInt,
+  IsJSON,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateCarDto {
   @ApiProperty({
@@ -45,4 +53,71 @@ export class UploadCategoryDto {
 }
 export class UploadBrandDto {
   id: number; // ID ของหมวดหมู่
+}
+export class UpdateCarDto extends PartialType(CreateCarDto) {}
+
+export class CreateCarPostDto {
+  @IsInt()
+  carId: number;
+
+  @IsInt()
+  vendorId: number;
+
+  @IsDecimal()
+  price: number;
+
+  @IsInt()
+  year: number;
+
+  @IsInt()
+  mileage: number; // New field for mileage
+
+  @IsJSON()
+  @IsOptional()
+  overrideSpecification?: string;
+
+  @IsBoolean()
+  isDiscount: boolean;
+
+  @IsDecimal()
+  @IsOptional()
+  preDiscountPrice?: number;
+}
+
+export class UpdateCarPostDto {
+  @IsInt()
+  @IsOptional()
+  carId?: number;
+
+  @IsInt()
+  @IsOptional()
+  vendorId?: number;
+
+  @IsDecimal()
+  @IsOptional()
+  price?: number;
+
+  @IsInt()
+  @IsOptional()
+  year?: number;
+
+  @IsInt()
+  @IsOptional()
+  mileage?: number;
+
+  @IsJSON()
+  @IsOptional()
+  overrideSpecification?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isDiscount?: boolean;
+
+  @IsDecimal()
+  @IsOptional()
+  preDiscountPrice?: number;
+
+  @IsDateString()
+  @IsOptional()
+  deletedAt?: string;
 }

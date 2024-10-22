@@ -1,20 +1,27 @@
+# Use the official Node.js 20 Alpine image as a base image
 FROM node:20-alpine
 
-# Create app directory
+# Set the working directory inside the container
 WORKDIR /usr/src/app
 
-# A wildcard is used to ensure both package.json AND yarn.lock are copied
+# Install build dependencies for native modules (optional for prisma and others)
+RUN apk add --no-cache python3 make g++
+
+# Copy package.json and yarn.lock (or package-lock.json)
 COPY package*.json yarn.lock ./
 
-RUN npm install 
-# # Install dependencies using Yarn
+# Install dependencies using npm (or yarn if preferred)
+RUN npm install
+# Uncomment if you prefer Yarn
 # RUN yarn install
 
-# Bundle app source
+# Copy the rest of the application files
 COPY . .
 
+# Generate Prisma client
 RUN npm run prisma generate
-# Creates a "dist" folder with the production build
+
+# Build the app (ensure your package.json has a build script)
 RUN npm run build
 
 # Start the server using the production build

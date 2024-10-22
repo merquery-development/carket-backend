@@ -1,134 +1,32 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { CreateCarDto } from '../utils/dto/car.dto';
-import { getPagination } from '../utils/pagination';
+import { getCarsAndStats } from '../utils/car.uti';
+import { CreateCarDto, UpdateCarDto } from '../utils/dto/car.dto';
 
 @Injectable()
 export class CarService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getCars({
-    page = null,
-    pageSize = null,
-    brandId = null,
-    categoryId = null,
-    priceMin = null,
-    priceMax = null,
-    mileageMin = null,
-    mileageMax = null,
-    sortBy = 'createdAt', // Default sort field
-    sortOrder = 'asc', // Default sort order
-  }: {
-    page?: number | null;
-    pageSize?: number | null;
-    brandId?: number | null;
-    categoryId?: number | null;
-    priceMin?: number | null;
-    priceMax?: number | null;
-    mileageMin?: number | null;
-    mileageMax?: number | null;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }) {
-    const { skip, take } = getPagination(page, pageSize);
-  
-    // Dynamic where conditions based on filters
-    const where = {
-      ...(brandId ? { brandId: { equals: brandId } } : {}),
-      ...(categoryId ? { categoryId: { equals: categoryId } } : {}),
-      ...(priceMin !== null && priceMax !== null ? { basePrice: { gte: priceMin, lte: priceMax } } : {}),
-      ...(mileageMin !== null && mileageMax !== null ? { mileage: { gte: mileageMin, lte: mileageMax } } : {}),
-    };
-  
-    const [cars, total, mileageStats, priceStats] = await Promise.all([
-      this.prisma.car.findMany({
-        skip,
-        take,
-        where,
-        orderBy: {
-          [sortBy]: sortOrder, // Dynamic sort field and direction
-        },
-        select: {
-          id: true,
-          year: true,
-          mileage: true,
-          basePrice: true,
-          Category: {
-            select: {
-              name: true,
-            },
-          },
-          Brand: {
-            select: {
-              name: true,
-            },
-          },
-          Model: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      }),
-  
-      // Get total count of cars
-      this.prisma.car.count({
-        where,
-      }),
-  
-      // Get statistics for mileage (grouped by predefined ranges)
-      this.prisma.car.groupBy({
-        by: ['mileage'],
-        _count: true,
-        where,
-        orderBy: {
-          mileage: 'asc',
-        },
-        having: {
-          mileage: {
-            gte: mileageMin ?? 0,
-            lte: mileageMax ?? 1000000,
-          },
-        },
-      }),
-  
-      // Get statistics for price (grouped by predefined ranges)
-      this.prisma.car.groupBy({
-        by: ['basePrice'],
-        _count: true,
-        where,
-        orderBy: {
-          basePrice: 'asc',
-        },
-        having: {
-          basePrice: {
-            gte: priceMin ?? 0,
-            lte: priceMax ?? 10000000,
-          },
-        },
-      }),
-    ]);
-  
-    const data = {
-      cars,
-      total,
-      page: page || 1,
-      pageSize: pageSize || total, // Default to total if no pageSize is given
-  
-      // Send mileage and price statistics
-      mileageStats: mileageStats.map(stat => ({
-        mileage: stat.mileage,
-        count: stat._count,
-      })),
-  
-      priceStats: priceStats.map(stat => ({
-        price: stat.basePrice,
-        count: stat._count,
-      })),
-    };
-  
-    return data;
+  async getCars(params) {
+    return await getCarsAndStats({
+      prismaModel: this.prisma.car, // Use Car model
+      customSelect: {
+        id: true,
+        basePrice: true,
+        mileage: true,
+        year: true,
+        Category: { select: { name: true } },
+        Brand: { select: { name: true } },
+      },
+      fieldMapping: {
+        priceField: 'basePrice', // Use Car's basePrice
+        mileageField: 'mileage',
+        brandIdField: 'brandId',
+        categoryIdField: 'categoryId',
+      },
+      ...params, // Pass other params dynamically
+    });
   }
   async getRecommendedCars(amount: number) {
     const cars = await this.prisma.car.findMany({
@@ -182,6 +80,45 @@ export class CarService {
     }
   }
 
+  async updateCar(id: string, updateCarDto: UpdateCarDto) {
+    try {
+      const result = await this.prisma.car.update({
+        where: { id: Number(id) },
+        data: {
+          ...updateCarDto,
+        },
+      });
+      if (!result) {
+        throw new HttpException(
+          'Error while update car',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      return { message: 'update successfull' };
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+  async deleteSoftCar(id: string) {
+    try {
+      const result = this.prisma.car.update({
+        where: { id: Number(id) },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
+      if (!result) {
+        throw new HttpException(
+          'Error while delete staff',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      return { message: 'delete staff successfull' };
+    } catch (error) {
+      // Handle error
+      throw new HttpException(error, HttpStatus.NOT_FOUND);
+    }
+  }
   async getAllBrand() {
     try {
       const result = this.prisma.brand.findMany();
@@ -201,7 +138,7 @@ export class CarService {
 
   async getCarById(id: string) {
     try {
-      const result = this.prisma.carPost.findFirst({
+      const result = this.prisma.car.findFirst({
         where: {
           id: Number(id),
         },
@@ -236,7 +173,11 @@ export class CarService {
       },
     });
   }
-  async updateCarPicture(carId: number, pictureName: string, picturePath: string) {
+  async updateCarPicture(
+    carId: number,
+    pictureName: string,
+    picturePath: string,
+  ) {
     await this.prisma.carPicture.create({
       data: {
         carId,
@@ -247,25 +188,24 @@ export class CarService {
     });
   }
 
-  async getAllCarPics(carId : number){
-   return await this.prisma.carPicture.findMany({
-      where : {carId : carId}
-    })
+  async getAllCarPics(carId: number) {
+    return await this.prisma.carPicture.findMany({
+      where: { carId: carId },
+    });
   }
 
-  async getCategoryLogoById(id: number){
+  async getCategoryLogoById(id: number) {
     return await this.prisma.category.findFirst({
-      where : {
-        id : id
-      }
-    })
+      where: {
+        id: id,
+      },
+    });
   }
-  async getBrandLogoById(id: number){
+  async getBrandLogoById(id: number) {
     return await this.prisma.category.findFirst({
-      where : {
-        id : id
-      }
-    })
+      where: {
+        id: id,
+      },
+    });
   }
-
 }

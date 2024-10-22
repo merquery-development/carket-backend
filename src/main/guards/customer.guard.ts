@@ -42,7 +42,7 @@ export class Customer implements CanActivate {
     }
 
     const user = await this.customerService
-      .getCustomerByName(profile.uid)
+      .getCustomerByUid(profile.uid)
       .catch((error) => {
         throw new UnauthorizedException('Authguard error', error.message);
       });

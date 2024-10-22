@@ -5,18 +5,21 @@ import { PassportModule } from '@nestjs/passport';
 import { AppService } from '../app.service';
 import { PrismaService } from '../prisma.service';
 import { AuthController } from './controllers/auth.controller';
+import { CarController } from './controllers/car.controller';
+import { CarPostController } from './controllers/carpost.controller';
 import { CustomerController } from './controllers/customer.controller';
+import { FileUploadController } from './controllers/file.controller';
 import { VendorController } from './controllers/vendor.controller';
 import { AuthService } from './services/auth.service';
 import { CarService } from './services/car.service';
+import { CarPostService } from './services/carpost.service';
 import { CustomerService } from './services/customer.service';
+import { FileUploadService } from './services/file.service';
 import { MailerService } from './services/mailer.service';
 import { VendorService } from './services/vendor.service';
+import { CarViewInterceptor } from './utils/carviewIntercep';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
-import { CarController } from './controllers/car.controller';
-import { FileUploadController } from './controllers/file.controller';
-import { FileUploadService } from './services/file.service';
 @Module({
   imports: [
     PassportModule,
@@ -38,7 +41,8 @@ import { FileUploadService } from './services/file.service';
     AuthController,
     CarController,
     CustomerController,
-    FileUploadController
+    FileUploadController,
+    CarPostController,
   ],
   providers: [
     AppService,
@@ -50,7 +54,9 @@ import { FileUploadService } from './services/file.service';
     CarService,
     MailerService,
     CustomerService,
-    FileUploadService
+    FileUploadService,
+    CarPostService,
+    CarViewInterceptor,
   ],
 })
 export class MainModule {}
