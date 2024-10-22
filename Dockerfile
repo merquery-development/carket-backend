@@ -11,13 +11,13 @@ COPY package*.json yarn.lock ./
 
 
 RUN yarn
-RUN yarn prisma generate
-RUN yarn build
 
 # Bundle app source
 COPY . .
 
-# Creates a "dist" folder with the production build
+RUN yarn prisma generate
+
+RUN yarn build
 
 EXPOSE 3000
 
