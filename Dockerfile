@@ -1,24 +1,37 @@
-FROM node:20-alpine
+# Step 1: Use a Node.js base image
+FROM node:20-alpine AS build
 
-# ติดตั้ง Python, make, g++ สำหรับการคอมไพล์แพ็กเกจที่ต้องการ
-RUN apk add --no-cache python3 make g++
+# Step 2: Set the working directory in the container
+WORKDIR /app
 
-# Create app directory
-WORKDIR /usr/src/app
+# Step 3: Copy package.json and package-lock.json to the working directory
+COPY package*.json ./
 
-# A wildcard is used to ensure both package.json AND yarn.lock are copied
-COPY package*.json yarn.lock ./
+# Step 4: Install dependencies
+RUN npm install --only=production
 
-RUN npm install yarn
-# Install dependencies using Yarn
-RUN yarn install
-
-# Bundle app source
+# Step 5: Copy the rest of the application source code to the working directory
 COPY . .
 
-RUN yarn prisma generate
-# Creates a "dist" folder with the production build
-RUN yarn build
+# Step 6: Build the NestJS application
+RUN npm run prisma generate
 
-# Start the server using the production build
-CMD ["node", "dist/main.js"]
+RUN npm run build
+
+# Step 8: Set the working directory in the production container
+WORKDIR /app
+
+# Step 9: Copy the built application and node_modules from the previous stage
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package*.json ./
+
+# Step 10: Set the environment variables (optional)
+ENV PORT=3000
+
+# Step 11: Expose the port the NestJS app will run on
+EXPOSE 3000
+
+# Step 12: Define the command to run the application
+CMD ["node", "dist/main"]
+
