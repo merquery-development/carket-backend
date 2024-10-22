@@ -4,8 +4,6 @@ FROM node:20-alpine
 # Set the working directory inside the container
 WORKDIR /usr/src/app
 
-# Install build dependencies for native modules (optional for prisma and others)
-RUN apk add --no-cache python3 make g++
 
 # Copy package.json and yarn.lock (or package-lock.json)
 COPY package*.json yarn.lock ./
