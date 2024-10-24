@@ -46,9 +46,9 @@ jobs:
           chmod 600 ssh_key.pem
           ssh -i ssh_key.pem -o StrictHostKeyChecking=no $VM_USERNAME@$VM_IP << 'EOF'
           docker pull ghcr.io/merquery-development/carket-backend/carket-dev:latest
-          docker stop carket-dev || true
-          docker rm carket-dev || true
-          docker run -d --env-file ~/carket/.env --name carket-dev -p 3000:3000 ghcr.io/merquery-development/carket-backend/carket-dev:latest
+          docker stop carket-dev-container || true
+          docker rm carket-dev-container || true
+          docker run -d --env-file ~/carket/.env --name carket-dev-container -p 3000:3000 ghcr.io/merquery-development/carket-backend/carket-dev:latest
           EOF
         env:
           VM_USERNAME: ${{ secrets.VM_USERNAME }}
