@@ -40,7 +40,7 @@ jobs:
           docker tag ghcr.io/${{ github.repository }}/carket-dev:${{ github.sha }} ghcr.io/${{ github.repository }}/carket-dev:latest
           docker push ghcr.io/${{ github.repository }}/carket-dev:latest
 
-        name: Update Docker container on VM
+      - name: Update Docker container on VM
         run: |
           echo "$SSH_PRIVATE_KEY" > ssh_key.pem
           chmod 600 ssh_key.pem
