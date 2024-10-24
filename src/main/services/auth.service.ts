@@ -115,8 +115,9 @@ export class AuthService {
     if (!match) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
-
-    await this.vendorService.updateLastLogin(customer.uid);
+    console.log(customer);
+    
+    await this.customerService.updateLastLoginCustomer(customer.uid);
     const payload = {
       uid: customer.uid,
       username: customer.username,
@@ -182,12 +183,14 @@ export class AuthService {
       );
     }
   }
-  async getProfile(token: string) {
+  async getProfile(token: string) { 
+    
     try {
       const decoded = await this.jwtService.verifyAsync(token, {
         secret: process.env.ACCESS_TOKEN_SECRET,
       });
-
+     
+      
       return decoded;
     } catch (error) {
       throw new HttpException("Invalid token'", HttpStatus.UNAUTHORIZED);

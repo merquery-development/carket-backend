@@ -61,7 +61,16 @@ export class CustomerService {
 
     return result;
   }
-
+  async updateLastLoginCustomer(uid: string) {
+    try {
+      await this.prisma.customer.update({
+        where: { uid: uid },
+        data: { lastLogin: new Date() },
+      });
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
   async getCustomerByUid(uid: string){
     const result = await this.prisma.customer.findFirst({
       where: {

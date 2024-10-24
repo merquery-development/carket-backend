@@ -249,7 +249,7 @@ export class CarController {
       );
     }
   }
-  @UseInterceptors(CarViewInterceptor) // เพิ่ม Interceptor ที่นี่
+
   @Get('car/:carId')
   async getCarbyid(@Param('carId') carId: string) {
     try {

@@ -21,7 +21,7 @@ export class CarViewInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     const userId = request.user?.id; // Assume the user is authenticated and userId is available
-    const carId = parseInt(request.params.carId, 10); // Assume carId is available in URL parameters
+    const carId = parseInt(request.params.carPostId, 10); // Assume carId is available in URL parameters
     const token = request.headers['authorization']?.split(' ')[1]; // Extract token from Authorization header
 
     const now = Date.now();
@@ -32,26 +32,41 @@ export class CarViewInterceptor implements NestInterceptor {
         this.logger.log(
           `Logged Car View: User ${userId} viewed Car ${carId} - Response time: ${responseTime}ms`,
         );
-
+        
         try {
           const profile = token
             ? await this.authService.getProfile(token)
             : null;
-          console.log(profile);
+          
+          
+            
+         await this.prisma.carPost.update({
+              where : {
+                id :carId
+              },
+              data: {
+                viewCount: {
+                  increment: 1, // This increments the current value by 1
+                },
+              },
+            });
+      
           if (!profile) {
-            this.logger.warn('UserId or CarId is missing. Logging skipped.');
+         
             return next.handle();
           }
 
           // Log the car view in the database
 
-          await this.prisma.userCarView.create({
+         await this.prisma.userCarView.create({
             data: {
-              customerId: profile.uid,
+              customerUid: profile.uid,
               carId: carId,
               createdAt: new Date(), // Automatically log the current timestamp
             },
           });
+         
+          
         } catch (error) {
           this.logger.error('Failed to log car view', error.stack);
         }

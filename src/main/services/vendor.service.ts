@@ -173,6 +173,7 @@ export class VendorService {
     }
   }
 
+  
   async getVendorByuid(uid: string) {
     const result = await this.prisma.vendorUser.findFirst({
       where: {

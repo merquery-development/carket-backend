@@ -8,8 +8,10 @@ import {
   Post,
   Put,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
@@ -18,10 +20,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CarPostService } from '../services/carpost.service';
+import { CarViewInterceptor } from '../utils/carviewIntercep';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 @ApiTags('carposts')
 @Controller('carposts')
-// @ApiBearerAuth('defaultBearerAuth')
+@ApiBearerAuth('defaultBearerAuth')
 export class CarPostController {
   constructor(private readonly carPostService: CarPostService) {}
 
@@ -43,7 +46,7 @@ export class CarPostController {
   ) {
     try {
       const updatedCarPost = await this.carPostService.updateCarPost(
-        (carPostId),
+        carPostId,
         updateCarPostDto,
       );
       return { message: 'Car post updated successfully', updatedCarPost };
@@ -54,7 +57,7 @@ export class CarPostController {
       );
     }
   }
-
+  @UseInterceptors(CarViewInterceptor) // เพิ่ม Interceptor ที่นี่
   @Get(':carPostId')
   @ApiOperation({ summary: 'Get specific car post by ID' })
   @ApiOkResponse({
@@ -62,9 +65,7 @@ export class CarPostController {
   })
   async getCarPostById(@Param('carPostId') carPostId: string) {
     try {
-      const carPost = await this.carPostService.getCarPostById(
-        carPostId,
-      );
+      const carPost = await this.carPostService.getCarPostById(carPostId);
       if (!carPost) {
         throw new HttpException('Car post not found', HttpStatus.NOT_FOUND);
       }
@@ -104,12 +105,12 @@ export class CarPostController {
   ) {
     try {
       const result = await this.carPostService.getCarPosts({
-        page: page ? parseInt(page, 10) : null,               // แปลงเป็น number
-        pageSize: pageSize ? parseInt(pageSize, 10) : null,   // แปลงเป็น number
-        brandId: brandId ? parseInt(brandId, 10) : null,      // แปลงเป็น number
+        page: page ? parseInt(page, 10) : null, // แปลงเป็น number
+        pageSize: pageSize ? parseInt(pageSize, 10) : null, // แปลงเป็น number
+        brandId: brandId ? parseInt(brandId, 10) : null, // แปลงเป็น number
         categoryId: categoryId ? parseInt(categoryId, 10) : null, // แปลงเป็น number
-        priceMin: priceMin ? parseFloat(priceMin) : null,     // แปลงเป็น float (กรณีใช้ทศนิยม)
-        priceMax: priceMax ? parseFloat(priceMax) : null,     // แปลงเป็น float (กรณีใช้ทศนิยม)
+        priceMin: priceMin ? parseFloat(priceMin) : null, // แปลงเป็น float (กรณีใช้ทศนิยม)
+        priceMax: priceMax ? parseFloat(priceMax) : null, // แปลงเป็น float (กรณีใช้ทศนิยม)
         mileageMin: mileageMin ? parseInt(mileageMin, 10) : null, // แปลงเป็น number
         mileageMax: mileageMax ? parseInt(mileageMax, 10) : null, // แปลงเป็น number
         sortBy,

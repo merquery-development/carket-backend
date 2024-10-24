@@ -103,7 +103,7 @@ model Car {
   specifications Json?
   basePrice      Decimal   @db.Decimal(12, 2)
   createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime   @default(now()) @updatedAt @map("updated_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt      DateTime? @map("deleted_at")
   carViewCount   Int?
   posts          CarPost[]
@@ -114,6 +114,7 @@ model Car {
 
 model CarPost {
   id                    Int       @id @default(autoincrement())
+  uid                   String?   @unique @default(uuid()) @map("uid")
   carId                 Int
   vendorId              Int
   price                 Decimal
@@ -121,11 +122,11 @@ model CarPost {
   mileage               Int // New field for mileage (เลขไมล์)
   overrideSpecification Json?
   isDiscount            Boolean
-  preDiscountPrice      Decimal  @db.Decimal(12, 2)
+  preDiscountPrice      Decimal   @db.Decimal(12, 2)
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt             DateTime? @map("deleted_at")
-  viewCount             Int?   @map("view_count")
+  viewCount             Int?      @map("view_count")
   car                   Car       @relation(fields: [carId], references: [id])
 
   vendor      Vendor        @relation(fields: [vendorId], references: [id])
@@ -175,9 +176,9 @@ model CarPicture {
 
 model UserCarView {
   id         Int      @id @default(autoincrement())
-  customerId Int
+  customerUid String
   carId      Int
   createdAt  DateTime @default(now()) @map("created_at")
-  customer   Customer @relation(fields: [customerId], references: [id])
+  customer   Customer @relation(fields: [customerUid], references: [uid])
   car        CarPost  @relation(fields: [carId], references: [id])
 }
