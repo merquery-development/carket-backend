@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 import { getCarsAndStats } from '../utils/car.uti';
+import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 
 @Injectable()
 export class CarPostService {
@@ -18,6 +18,7 @@ export class CarPostService {
           mileage: createCarPostDto.mileage,
           overrideSpecification: createCarPostDto.overrideSpecification,
           isDiscount: createCarPostDto.isDiscount,
+          viewCount: createCarPostDto.viewCount,
           preDiscountPrice: new Prisma.Decimal(
             createCarPostDto.preDiscountPrice,
           ),
@@ -83,7 +84,7 @@ export class CarPostService {
 
   async getCarPosts(params) {
     return await getCarsAndStats({
-      prismaModel: this.prisma.carPost,  // Use CarPost model
+      prismaModel: this.prisma.carPost, // Use CarPost model
       customSelect: {
         id: true,
         price: true,
@@ -100,12 +101,12 @@ export class CarPostService {
         },
       },
       fieldMapping: {
-        priceField: 'price',  // Use CarPost's price
+        priceField: 'price', // Use CarPost's price
         mileageField: 'mileage',
-        brandIdField: 'car.brandId',  // Reference related Car model
-        categoryIdField: 'car.categoryId',  // Reference related Car model
+        brandIdField: 'car.brandId', // Reference related Car model
+        categoryIdField: 'car.categoryId', // Reference related Car model
       },
-      ...params,  // Pass other params dynamically
+      ...params, // Pass other params dynamically
     });
   }
   async getCarPostById(id: string) {
@@ -120,6 +121,4 @@ export class CarPostService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
-
-
 }

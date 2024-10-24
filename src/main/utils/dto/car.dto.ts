@@ -79,6 +79,9 @@ export class CreateCarPostDto {
   @IsBoolean()
   isDiscount: boolean;
 
+  @IsInt()
+  viewCount: number;
+
   @IsDecimal()
   @IsOptional()
   preDiscountPrice?: number;
