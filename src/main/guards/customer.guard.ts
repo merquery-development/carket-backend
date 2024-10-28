@@ -11,27 +11,32 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { AuthService } from '../services/auth.service';
 import { CustomerService } from '../services/customer.service';
+import { log } from 'console';
+
 @Injectable()
-export class Customer implements CanActivate {
+export class CustomerOrGuestGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly authService: AuthService,
     private readonly customerService: CustomerService,
   ) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
+
+
     if (!token) {
-      throw new UnauthorizedException('token not found');
+      // If no token, the user is a guest
+      request['isGuest'] = true;
+      return true; // Allow guest access
     }
+
     try {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: process.env.ACCESS_TOKEN_SECRET,
       });
-      // 💡 We're assigning the payload to the request object here
-      // so that we can access it in our route handlers
-
-      request['vendor'] = payload;
+      request['customer'] = payload;
     } catch {
       throw new UnauthorizedException('invalid token');
     }
@@ -50,7 +55,9 @@ export class Customer implements CanActivate {
     if (!user || !user.isEnable) {
       throw new UnauthorizedException('User is not enabled');
     }
-    return true;
+
+    request['isGuest'] = false;
+    return true; // Allow customer access
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {

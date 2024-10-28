@@ -115,7 +115,7 @@ export class AuthService {
     if (!match) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
-    console.log(customer);
+ 
     
     await this.customerService.updateLastLoginCustomer(customer.uid);
     const payload = {

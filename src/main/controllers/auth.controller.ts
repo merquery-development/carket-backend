@@ -21,6 +21,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import * as jwt from 'jsonwebtoken';
+import { CustomerOrGuestGuard } from '../guards/customer.guard';
 import { AuthService } from '../services/auth.service';
 import { VendorService } from '../services/vendor.service';
 import { RefreshTokenDto } from '../utils/dto/token.dto';
@@ -104,9 +105,14 @@ export class AuthController {
   @Get('profile')
   @HttpCode(200)
   @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(CustomerOrGuestGuard)
   @ApiOperation({ summary: 'Get profile user from jwt token' })
   @ApiResponse({ status: 200, description: 'request sucess' })
   async getProfile(@Req() request: Request) {
+    if(request['isGuest']){
+      throw new UnauthorizedException('Guests cannot access the profile');
+    };
+
     const authorization = request.headers['authorization'];
 
     if (!authorization || !authorization.startsWith('Bearer ')) {

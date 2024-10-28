@@ -214,7 +214,7 @@ export class CarController {
   @Get('car-pic/carId/:carId')
   @ApiOperation({ summary: 'Get all carpic' })
   async getAllCarPics(@Param('carId') carId: string) {
-    console.log(carId);
+
 
     return this.carService.getAllCarPics(Number(carId));
   }

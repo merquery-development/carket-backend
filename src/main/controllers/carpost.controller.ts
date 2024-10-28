@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -8,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -22,6 +24,7 @@ import {
 import { CarPostService } from '../services/carpost.service';
 import { CarViewInterceptor } from '../utils/carviewIntercep';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
+import { CustomerOrGuestGuard } from '../guards/customer.guard';
 @ApiTags('carposts')
 @Controller('carposts')
 @ApiBearerAuth('defaultBearerAuth')
@@ -91,6 +94,7 @@ export class CarPostController {
   @ApiQuery({ name: 'mileageMax', required: false, type: String })
   @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
+  @UseGuards(CustomerOrGuestGuard)
   async getCarPosts(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
@@ -120,6 +124,20 @@ export class CarPostController {
     } catch (error) {
       throw new HttpException(
         { message: 'Error fetching car posts', error: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Delete('delete/:carId')
+  @ApiOperation({ summary: 'Soft delete car by ID' })
+  async deleteSoftCar(@Param('carId') carId: string) {
+    try {
+      const deletedCar = await this.carPostService.deleteSoftCarPost(carId);
+      return { message: 'Car deleted successfully', deletedCar };
+    } catch (error) {
+      throw new HttpException(
+        { message: 'Error deleting car', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

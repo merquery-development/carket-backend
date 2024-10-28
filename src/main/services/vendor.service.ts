@@ -131,7 +131,7 @@ export class VendorService {
 
       return { message: 'User created successfully' };
     } catch (error) {
-      console.log(error);
+    
 
       throw new HttpException(
         'Error while creating vendor user',

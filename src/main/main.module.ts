@@ -20,6 +20,7 @@ import { VendorService } from './services/vendor.service';
 import { CarViewInterceptor } from './utils/carviewIntercep';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
+import { CustomerOrGuestGuard } from './guards/customer.guard';
 @Module({
   imports: [
     PassportModule,
@@ -57,6 +58,7 @@ import { GoogleStrategy } from './utils/strategy/google.strategy';
     FileUploadService,
     CarPostService,
     CarViewInterceptor,
+    CustomerOrGuestGuard
   ],
 })
 export class MainModule {}

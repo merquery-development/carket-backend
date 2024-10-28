@@ -76,8 +76,7 @@ export class FileUploadController {
         files,
         Number(body.carId),
       );
-      console.log(fileUrls);
-
+   
       return { urls: fileUrls };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);

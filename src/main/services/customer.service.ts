@@ -10,6 +10,16 @@ export class CustomerService {
     const saltRounds = 10;
     return await bcrypt.hash(password, saltRounds);
   }
+
+
+  async getCustomer(){
+    const result = this.prisma.customer.findMany({
+      where  :{
+        deletedAt : null
+      }
+    })
+    return result
+  }
   async createCustomer(createCustomerDto: CreateCustomerDto) {
     let hashedPassword;
     const uid = firstPartUid();

@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post,Get } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CustomerService } from '../services/customer.service';
 import { CreateCustomerDto } from '../utils/dto/customer.dto';
@@ -15,5 +15,11 @@ export class CustomerController {
   })
   createCustomer(@Body() postData: CreateCustomerDto) {
     return this.customerService.createCustomer(postData);
+  }
+
+  @Get('')
+  @ApiOperation({ summary: 'List all customer' })
+  getAllCustomer() {
+    return this.customerService.getCustomer();
   }
 }

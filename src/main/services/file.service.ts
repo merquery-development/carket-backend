@@ -185,8 +185,7 @@ export class FileUploadService {
     throw new HttpException('Invalid logo file', HttpStatus.BAD_REQUEST);
   }
 
- console.log(logo);
- console.log(id);
+
  
   
   const logoOriginalname = logo.originalname.split('.')[0].toLowerCase()

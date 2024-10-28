@@ -113,7 +113,7 @@ export class CarService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      return { message: 'delete staff successfull' };
+      return { message: 'delete car successfull' };
     } catch (error) {
       // Handle error
       throw new HttpException(error, HttpStatus.NOT_FOUND);
