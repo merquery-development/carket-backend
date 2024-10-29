@@ -1,10 +1,18 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UseGuards,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { getCarsAndStats } from '../utils/car.uti';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
+import { CarPostGuard } from '../guards/carpost.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Injectable()
+
 export class CarPostService {
   constructor(private readonly prisma: PrismaService) {}
   async createCarPost(createCarPostDto: CreateCarPostDto) {
@@ -121,6 +129,6 @@ export class CarPostService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
-
-  
+  async createCategory() {}
+  async createBranbds() {}
 }

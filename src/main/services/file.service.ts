@@ -120,19 +120,20 @@ export class FileUploadService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    const logoOriginalname = logo.originalname.split('.')[0].toLowerCase()
-    const logoActiveOriginalname = logoActive.originalname.split('.')[0].toLowerCase()
+    const logoOriginalname = logo.originalname.split('.')[0].toLowerCase();
+    const logoActiveOriginalname = logoActive.originalname
+      .split('.')[0]
+      .toLowerCase();
     // กำหนด path สำหรับ brand หรือ category
-    const folderPath = 'logos/category';
-
-
+    const folderPath = 'logos/category/basic';
+    const folderPathActive = 'logos/category/active';
 
     // สร้างชื่อไฟล์สำหรับโลโก้ธรรมดาและโลโก้ active
     const logoName = `${logoOriginalname}.${logoExtension}`;
-    
+
     const logoActiveName = `${logoActiveOriginalname}.${logoActiveExtension}`;
     const logoKey = `${folderPath}/${logoName}`;
-    const logoActiveKey = `${folderPath}/${logoActiveName}`;
+    const logoActiveKey = `${folderPathActive}/${logoActiveName}`;
     try {
       // อัปโหลดโลโก้ธรรมดา
       await this.s3.send(
@@ -144,7 +145,7 @@ export class FileUploadService {
         }),
       );
 
-    //   // อัปโหลดโลโก้ active
+      //   // อัปโหลดโลโก้ active
       await this.s3.send(
         new PutObjectCommand({
           Bucket: process.env.BUCKET,
@@ -153,12 +154,15 @@ export class FileUploadService {
           ContentType: `image/${logoActiveExtension}`,
         }),
       );
+
       await this.carService.updateCategoryLogo(
         id,
         logoName,
         logoActiveName,
         folderPath,
+        folderPathActive,
       );
+
       const envUrl = process.env.S3_PUBLIC_URL || 'https://your-r2-public-url';
       const logoUrl = `${envUrl}/${logoKey}`;
       const logoActiveUrl = `${envUrl}/${logoActiveKey}`;
@@ -171,50 +175,80 @@ export class FileUploadService {
     }
   }
 
-
   async uploadBrandLogo(
     id: number,
     logo: Express.Multer.File,
+    logoLight: Express.Multer.File,
   ) {
     const allowedExtensions = ['jpg', 'jpeg', 'png'];
     const maxSizeInBytes = 500 * 1024; // 500KB
 
-      // ตรวจสอบไฟล์โลโก้ธรรมดา
-  const logoExtension = logo.mimetype.split('/')[1].toLowerCase();
-  if (logo.size > maxSizeInBytes || !allowedExtensions.includes(logoExtension)) {
-    throw new HttpException('Invalid logo file', HttpStatus.BAD_REQUEST);
-  }
+    // ตรวจสอบไฟล์โลโก้ธรรมดา
+    const logoExtension = logo.mimetype.split('/')[1].toLowerCase();
+    if (
+      logo.size > maxSizeInBytes ||
+      !allowedExtensions.includes(logoExtension)
+    ) {
+      throw new HttpException('Invalid logo file', HttpStatus.BAD_REQUEST);
+    }
+    const logoLightExtension = logoLight.mimetype.split('/')[1].toLowerCase();
+    if (
+      logoLight.size > maxSizeInBytes ||
+      !allowedExtensions.includes(logoExtension)
+    ) {
+      throw new HttpException('Invalid logo file', HttpStatus.BAD_REQUEST);
+    }
 
-
- 
-  
-  const logoOriginalname = logo.originalname.split('.')[0].toLowerCase()
-  // กำหนด path สำหรับ brand 
-  const folderPath =  'logos/brand';
+    const logoOriginalname = logo.originalname.split('.')[0].toLowerCase();
+    const logoLightOriginalname = logoLight.originalname
+      .split('.')[0]
+      .toLowerCase();
+    // กำหนด path สำหรับ brand
+    const folderPathDark = 'logos/brand/dark';
+    const folderPathLight = 'logos/brand/light';
 
     // สร้างชื่อไฟล์สำหรับโลโก้ธรรมดาและโลโก้ active
-  const logoName = `${logoOriginalname}.${logoExtension}`;
-  const logoKey = `${folderPath}/${logoName}`;
+    const logoName = `${logoOriginalname}.${logoExtension}`;
+    const logoKey = `${folderPathDark}/${logoName}`;
+    const logoLightName = `${logoLightOriginalname}.${logoLightExtension}`;
+    const logoLightkey = `${folderPathLight}/${logoLightName}`;
 
-  try {
-    // อัปโหลดโลโก้ธรรมดา
-    await this.s3.send(new PutObjectCommand({
-      Bucket: process.env.BUCKET,
-      Key: logoKey,
-      Body: logo.buffer,
-      ContentType: `image/${logoExtension}`,
-    }));
+    try {
+      // อัปโหลดโลโก้ธรรมดา
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: process.env.BUCKET,
+          Key: logoKey,
+          Body: logo.buffer,
+          ContentType: `image/${logoExtension}`,
+        }),
+      );
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: process.env.BUCKET,
+          Key: logoLightkey,
+          Body: logoLight.buffer,
+          ContentType: `image/${logoLightExtension}`,
+        }),
+      );
 
-    // อัปโหลดโลโก้ active
-    
-    await this.carService.updateBrandLogo(id, logoName,folderPath);
-    const envUrl = process.env.S3_PUBLIC_URL || 'https://your-r2-public-url';
-    const logoUrl = `${envUrl}/${logoKey}`;
-   
-    return `Logos uploaded: ${logoUrl}`;
-  }catch (error) {
-    throw new HttpException(`File upload failed: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      await this.carService.updateBrandLogo(
+        id,
+        logoName,
+        folderPathDark,
+        logoLightName,
+        folderPathLight,
+      );
+      const envUrl = process.env.S3_PUBLIC_URL || 'https://your-r2-public-url';
+      const logoUrl = `${envUrl}/${logoKey}`;
+      const logoLightUrl = `${envUrl}/${logoLightkey}`;
+
+      return `Logos uploaded: ${logoUrl},${logoLightUrl}`;
+    } catch (error) {
+      throw new HttpException(
+        `File upload failed: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
-  
-}
 }

@@ -10,7 +10,7 @@ import {
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -76,12 +76,13 @@ export class FileUploadController {
         files,
         Number(body.carId),
       );
-   
+
       return { urls: fileUrls };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
+
   @Post('category-logo')
   @ApiOperation({ summary: 'Upload normal and active logos for category' })
   @ApiConsumes('multipart/form-data')
@@ -135,7 +136,7 @@ export class FileUploadController {
     }
   }
   @Post('brand-logo')
-  @UseInterceptors(FileInterceptor('logo')) // ใช้ FileInterceptor สำหรับการรับไฟล์
+  @UseInterceptors(AnyFilesInterceptor()) // ใช้ AnyFilesInterceptor สำหรับการรับไฟล์
   @ApiOperation({ summary: 'Upload logo for brand' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -144,7 +145,8 @@ export class FileUploadController {
     schema: {
       type: 'object',
       properties: {
-        logo: { type: 'string', format: 'binary' }, // โลโก้แบรนด์
+        logo: { type: 'string', format: 'binary' }, // โลโก้ธรรมดา
+        logoLight: { type: 'string', format: 'binary' }, // โลโก้ตอน active
         id: { type: 'integer' }, // ID ของหมวดหมู่
       },
     },
@@ -157,11 +159,11 @@ export class FileUploadController {
   @ApiResponse({ status: 500, description: 'File upload failed' })
   async uploadBrandLogo(
     @Body() body: UploadBrandDto, // รับข้อมูลจาก body
-    @UploadedFile() logo: Express.Multer.File, // รับไฟล์โลโก้
+    @UploadedFiles() files: Array<Express.Multer.File>, // รับไฟล์ทั้งหมด
   ) {
+    const logo = files.find((file) => file.fieldname === 'logo'); // โลโก้ธรรมดา
+    const logoLight = files.find((file) => file.fieldname === 'logoLight'); // โลโก้ active
     try {
-     
-
       // ตรวจสอบว่าได้รับไฟล์โลโก้หรือไม่
       if (!logo) {
         throw new HttpException(
@@ -174,6 +176,7 @@ export class FileUploadController {
       const result = await this.fileUploadService.uploadBrandLogo(
         Number(body.id),
         logo,
+        logoLight
       );
 
       return result;

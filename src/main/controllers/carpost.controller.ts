@@ -21,13 +21,15 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { CarPostGuard } from '../guards/carpost.guard';
+import { CustomerOrGuestGuard } from '../guards/customer.guard';
 import { CarPostService } from '../services/carpost.service';
 import { CarViewInterceptor } from '../utils/carviewIntercep';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
-import { CustomerOrGuestGuard } from '../guards/customer.guard';
 @ApiTags('carposts')
 @Controller('carposts')
 @ApiBearerAuth('defaultBearerAuth')
+@UseGuards(CarPostGuard)
 export class CarPostController {
   constructor(private readonly carPostService: CarPostService) {}
 

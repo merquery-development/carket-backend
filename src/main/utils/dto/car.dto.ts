@@ -124,3 +124,10 @@ export class UpdateCarPostDto {
   @IsOptional()
   deletedAt?: string;
 }
+export class createBrandDto{
+  name
+}
+
+export class createCategoryDto{
+
+}

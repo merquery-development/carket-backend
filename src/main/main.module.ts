@@ -9,18 +9,21 @@ import { CarController } from './controllers/car.controller';
 import { CarPostController } from './controllers/carpost.controller';
 import { CustomerController } from './controllers/customer.controller';
 import { FileUploadController } from './controllers/file.controller';
+import { RoleController } from './controllers/role.controller';
 import { VendorController } from './controllers/vendor.controller';
+import { CustomerOrGuestGuard } from './guards/customer.guard';
 import { AuthService } from './services/auth.service';
 import { CarService } from './services/car.service';
 import { CarPostService } from './services/carpost.service';
 import { CustomerService } from './services/customer.service';
 import { FileUploadService } from './services/file.service';
 import { MailerService } from './services/mailer.service';
+import { RoleService } from './services/role.service';
 import { VendorService } from './services/vendor.service';
 import { CarViewInterceptor } from './utils/carviewIntercep';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
-import { CustomerOrGuestGuard } from './guards/customer.guard';
+import { CarPostGuard } from './guards/carpost.guard';
 @Module({
   imports: [
     PassportModule,
@@ -44,6 +47,7 @@ import { CustomerOrGuestGuard } from './guards/customer.guard';
     CustomerController,
     FileUploadController,
     CarPostController,
+    RoleController,
   ],
   providers: [
     AppService,
@@ -58,7 +62,9 @@ import { CustomerOrGuestGuard } from './guards/customer.guard';
     FileUploadService,
     CarPostService,
     CarViewInterceptor,
-    CustomerOrGuestGuard
+    CustomerOrGuestGuard,
+    RoleService,
+    CarPostGuard,
   ],
 })
 export class MainModule {}

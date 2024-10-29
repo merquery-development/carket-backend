@@ -148,12 +148,20 @@ export class CarService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
-  async updateBrandLogo(brandId: number, logoName: string, logoPath: string) {
+  async updateBrandLogo(
+    brandId: number,
+    logoName: string,
+    logoPath: string,
+    logoLightName: string,
+    logoLightPath: string,
+  ) {
     await this.prisma.brand.update({
       where: { id: brandId },
       data: {
         logoName: logoName,
         logoPath: logoPath,
+        logoLightBgName: logoLightName,
+        logoLightBgPath: logoLightPath,
       },
     });
   }
@@ -163,6 +171,7 @@ export class CarService {
     logoName: string,
     logoActiveName: string,
     logoPath: string,
+    logoPathActive: string,
   ) {
     await this.prisma.category.update({
       where: { id: categoryId },
@@ -170,6 +179,7 @@ export class CarService {
         logoName: logoName,
         logoNameActive: logoActiveName,
         logoPath: logoPath,
+        logoPathActive: logoPathActive,
       },
     });
   }

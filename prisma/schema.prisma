@@ -146,13 +146,16 @@ model Category {
 }
 
 model Brand {
-  id        Int      @id @default(autoincrement())
-  logoName  String?  @map("logo_name")
-  logoPath  String?  @map("logo_path")
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-  cars      Car[]
-  Model     Model[]
+  id               Int      @id @default(autoincrement())
+  logoName         String?  @map("logo_name") // ชื่อไฟล์โลโก้หลัก
+  logoPath         String?  @map("logo_path") // ที่อยู่ไฟล์โลโก้หลัก
+  logoLightBgName  String?  @map("logo_light_bg_name") // ชื่อไฟล์โลโก้สำหรับพื้นหลังขาว
+  logoLightBgPath  String?  @map("logo_light_bg_path") // ที่อยู่ไฟล์โลโก้สำหรับพื้นหลังขาว
+
+  name             String
+  createdAt        DateTime @default(now()) @map("created_at")
+  cars             Car[]
+  Model            Model[]
 }
 
 model Model {
@@ -175,10 +178,10 @@ model CarPicture {
 }
 
 model UserCarView {
-  id         Int      @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   customerUid String
-  carId      Int
-  createdAt  DateTime @default(now()) @map("created_at")
-  customer   Customer @relation(fields: [customerUid], references: [uid])
-  car        CarPost  @relation(fields: [carId], references: [id])
+  carId       Int
+  createdAt   DateTime @default(now()) @map("created_at")
+  customer    Customer @relation(fields: [customerUid], references: [uid])
+  car         CarPost  @relation(fields: [carId], references: [id])
 }
