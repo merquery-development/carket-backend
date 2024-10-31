@@ -40,10 +40,18 @@ export class CarPostGuard implements CanActivate {
         throw new HttpException('Profile not found', HttpStatus.UNAUTHORIZED);
       }
 
-      const vendor = await this.vendorService.getVendorByuid(profile.uid);
-      if (!vendor || !vendor.isEnable) {
-        throw new UnauthorizedException('vendor is not enabled');
+      // Check if the vendor's role is admin
+      const vendor = await this.vendorService.getRoleByVendorUid(
+        profile.uid,
+        'admin',
+      );
+      if (!vendor) {
+        throw new ForbiddenException('User is not an admin');
       }
+      if (!vendor.isEnable) {
+        throw new UnauthorizedException('vendor is not enabled ');
+      }
+
       return true;
     } catch (error) {
       throw new ForbiddenException('Invalid token or insufficient permissions');

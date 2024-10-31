@@ -29,7 +29,7 @@ import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 @ApiTags('carposts')
 @Controller('carposts')
 @ApiBearerAuth('defaultBearerAuth')
-@UseGuards(CarPostGuard)
+// @UseGuards(CarPostGuard)
 export class CarPostController {
   constructor(private readonly carPostService: CarPostService) {}
 

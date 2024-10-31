@@ -201,5 +201,16 @@ export class VendorService {
     return { message: 'update successfull' };
   }
 
- 
+ async getRoleByVendorUid(uuid :string,roleName : string){
+  const user = await this.prisma.vendorUser.findFirst({
+    where : {
+      uid: uuid,   
+      role : {
+        name : roleName
+      }
+    },
+
+  })
+   return user
+ }
 }
