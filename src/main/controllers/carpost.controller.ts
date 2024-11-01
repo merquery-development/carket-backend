@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -13,22 +14,21 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { CarPostGuard } from '../guards/carpost.guard';
 import { CustomerOrGuestGuard } from '../guards/customer.guard';
 import { CarPostService } from '../services/carpost.service';
 import { CarViewInterceptor } from '../utils/carviewIntercep';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 @ApiTags('carposts')
 @Controller('carposts')
-@ApiBearerAuth('defaultBearerAuth')
+// @ApiBearerAuth('defaultBearerAuth')
 // @UseGuards(CarPostGuard)
 export class CarPostController {
   constructor(private readonly carPostService: CarPostService) {}
@@ -63,7 +63,7 @@ export class CarPostController {
     }
   }
   @UseInterceptors(CarViewInterceptor) // เพิ่ม Interceptor ที่นี่
-  @Get(':carPostId')
+  @Get('carpost/:carPostId')
   @ApiOperation({ summary: 'Get specific car post by ID' })
   @ApiOkResponse({
     description: 'Specific car post data',
@@ -143,5 +143,29 @@ export class CarPostController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  @Get('bar')
+  @ApiQuery({
+    name: 'barCount',
+    required: true,
+    description: 'Number of bars to divide the price range',
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns an array of car counts per price range',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid barCount provided',
+  })
+  async getBar(@Query('barCount') barCount: string) {
+    const count = Number(barCount); // แปลงค่าเป็นตัวเลข
+    if (isNaN(count) || count <= 0) {
+      throw new BadRequestException('barCount must be a positive number');
+    }
+
+    return await this.carPostService.getCarBar(count);
   }
 }
