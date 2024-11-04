@@ -1,5 +1,7 @@
+import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AppService } from '../app.service';
@@ -11,6 +13,7 @@ import { CustomerController } from './controllers/customer.controller';
 import { FileUploadController } from './controllers/file.controller';
 import { RoleController } from './controllers/role.controller';
 import { VendorController } from './controllers/vendor.controller';
+import { CarPostGuard } from './guards/carpost.guard';
 import { CustomerOrGuestGuard } from './guards/customer.guard';
 import { AuthService } from './services/auth.service';
 import { CarService } from './services/car.service';
@@ -23,7 +26,6 @@ import { VendorService } from './services/vendor.service';
 import { CarViewInterceptor } from './utils/carviewIntercep';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
-import { CarPostGuard } from './guards/carpost.guard';
 @Module({
   imports: [
     PassportModule,
@@ -39,6 +41,10 @@ import { CarPostGuard } from './guards/carpost.guard';
       secret: process.env.REFRESH_TOKEN_SECRET,
       signOptions: { expiresIn: '1d' },
     }),
+    CacheModule.register({
+    
+      isGlobal: true,
+    }),
   ],
   controllers: [
     VendorController,
@@ -50,6 +56,10 @@ import { CarPostGuard } from './guards/carpost.guard';
     RoleController,
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor,
+    },
     AppService,
     PrismaService,
     VendorService,

@@ -1,13 +1,16 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { getCarsAndStats } from '../utils/car.uti';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
-import { log } from 'console';
-
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 @Injectable()
 export class CarPostService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
   async createCarPost(createCarPostDto: CreateCarPostDto) {
     try {
       const result = await this.prisma.carPost.create({
@@ -122,50 +125,74 @@ export class CarPostService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
-  async getCarBar(barCount: number) {
-    // Step 1: หา maxPrice และ minPrice
+  async getCarBar() {
+    // Step 1: Retrieve max and min prices
     const maxPrice = await this.prisma.carPost.aggregate({
       _max: { price: true },
     });
     const minPrice = await this.prisma.carPost.aggregate({
       _min: { price: true },
     });
-  
-    // Step 2: ตรวจสอบว่าข้อมูลไม่เป็นค่าว่าง
+
+    // Step 2: Check if data is available
     if (!maxPrice._max.price || !minPrice._min.price) {
-      throw new Error("ไม่พบข้อมูลราคาที่สามารถคำนวณได้");
+      throw new Error('ไม่พบข้อมูลราคาที่สามารถคำนวณได้');
     }
-  
-    // Step 3: คำนวณ barRange
-    const barRange = (maxPrice._max.price.toNumber() - minPrice._min.price.toNumber()) / barCount;
-  
-    // Step 4: สร้างอาเรย์สำหรับเก็บค่าในช่วงราคา
-    const barArray: number[] = new Array(barCount).fill(0);
-  
-    // Step 5: ใส่ค่าลงในอาเรย์ตามช่วงราคา
-    for (let i = 0; i < barCount; i++) {
-      const lowerBound = minPrice._min.price.toNumber() + i * barRange;
-      const upperBound = (i === barCount - 1) ? maxPrice._max.price.toNumber() : lowerBound + barRange;
-  
-      // ใช้ lte ในบาร์สุดท้าย
-      const carCountInRange = await this.prisma.carPost.count({
-        where: {
-          price: {
-            gte: lowerBound,  // ราคาตั้งแต่ lowerBound ขึ้นไป
-            // ใช้ lt หรือ lte ขึ้นอยู่กับว่าเป็นบาร์สุดท้ายหรือไม่
-            [i === barCount - 1 ? 'lte' : 'lt']: upperBound,  
+
+    // Define class ranges
+    const classes = [
+      { name: 'eco-class', min: 0, max: 1000000, range: 10000 },
+      { name: 'mid-class', min: 1000000, max: 3000000, range: 50000 },
+      { name: 'high-class', min: 3000000, max: 5000000, range: 50000 },
+      {
+        name: 'all-class',
+        min: minPrice._min.price.toNumber(),
+        max: maxPrice._max.price.toNumber(),
+        range: 50000,
+      },
+    ];
+
+    // Result to hold bars data for each class
+    const result = {};
+
+    // Step 3: Calculate bars for each class
+    for (const classInfo of classes) {
+      const { name, min, max, range } = classInfo;
+      const barCount = Math.ceil((max - min) / range);
+      const barRange = range;
+
+      // Initialize array to store car count in each bar
+      const barArray: number[] = new Array(barCount).fill(0);
+
+      // Step 4: Populate car counts in each bar
+      for (let i = 0; i < barCount; i++) {
+        const lowerBound = min + i * barRange;
+        const upperBound = i === barCount - 1 ? max : lowerBound + barRange;
+
+        // Count cars within the current range
+        const carCountInRange = await this.prisma.carPost.count({
+          where: {
+            price: {
+              gte: lowerBound,
+              [i === barCount - 1 ? 'lte' : 'lt']: upperBound,
+            },
           },
-        },
-      });
-  
-      barArray[i] = carCountInRange; // ใส่ค่าจำนวนรถที่อยู่ในช่วงนี้ลงในอาเรย์
+        });
+
+        barArray[i] = carCountInRange;
+      }
+
+      // Store class data in the result
+      result[name] = {
+        barCount,
+        barRange,
+        minPrice: min,
+        maxPrice: max,
+        bars: barArray,
+      };
     }
-  
-    return {
-      barRange,
-      minPrice: minPrice._min.price.toNumber(),
-      maxPrice: maxPrice._max.price.toNumber(),
-      bars: barArray,
-    };
+
+
+    return result;
   }
 }

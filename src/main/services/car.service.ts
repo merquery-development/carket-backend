@@ -68,7 +68,7 @@ export class CarService {
           modelId: createCarDto.modelId,
           year: createCarDto.year,
           specifications: createCarDto.specifications,
-          basePrice: new Prisma.Decimal(createCarDto.basePrice), // ใช้ Prisma.Decimal เพื่อจัดการ Decimal
+          basePrice: createCarDto.basePrice, // ใช้ Prisma.Decimal เพื่อจัดการ Decimal
         },
       });
       if (!result) {

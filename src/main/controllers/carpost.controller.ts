@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -22,10 +21,13 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+
+import { CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CustomerOrGuestGuard } from '../guards/customer.guard';
 import { CarPostService } from '../services/carpost.service';
 import { CarViewInterceptor } from '../utils/carviewIntercep';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
+
 @ApiTags('carposts')
 @Controller('carposts')
 // @ApiBearerAuth('defaultBearerAuth')
@@ -144,28 +146,14 @@ export class CarPostController {
       );
     }
   }
-
+  @CacheKey('custom_key')
+  @CacheTTL(24*60*60 * 1000) //millisecond
   @Get('bar')
-  @ApiQuery({
-    name: 'barCount',
-    required: true,
-    description: 'Number of bars to divide the price range',
-    type: Number,
-  })
   @ApiResponse({
     status: 200,
     description: 'Returns an array of car counts per price range',
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid barCount provided',
-  })
-  async getBar(@Query('barCount') barCount: string) {
-    const count = Number(barCount); // แปลงค่าเป็นตัวเลข
-    if (isNaN(count) || count <= 0) {
-      throw new BadRequestException('barCount must be a positive number');
-    }
-
-    return await this.carPostService.getCarBar(count);
+  async getBar() {  
+    return await this.carPostService.getCarBar();
   }
 }
