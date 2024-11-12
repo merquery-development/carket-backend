@@ -58,8 +58,8 @@ export class CarService {
             pictures: {
               select: {
                 id: true,
-                pictureName: true, // เพิ่มฟิลด์ชื่อรูปภาพที่ต้องการ
-                picturePath: true, // เพิ่มฟิลด์ชื่อรูปภาพที่ต้องการ
+                pictureName: true,
+                picturePath: true,
               },
             },
           },
@@ -67,8 +67,27 @@ export class CarService {
       },
     });
   
-    // สุ่มลำดับและเลือกจำนวนรถตามที่กำหนด
-    const randomCars = cars.sort(() => 0.5 - Math.random()).slice(0, amount);
+    // ปรับรูปแบบ output และสุ่มเลือกข้อมูล
+    const randomCars = cars
+      .map(car => ({
+        id: car.id,
+        year: car.year,
+        mileage: car.mileage,
+        category: car.Category.name, // เปลี่ยนเป็น string
+        brand: car.Brand.name,       // เปลี่ยนเป็น string
+        model: car.Model.name,
+        posts: car.posts.map(post => ({
+          price: post.price,
+          mileage: post.mileage,
+          pictures: post.pictures.map(picture => ({
+            id: picture.id,
+            pictureName: picture.pictureName,
+            picturePath: picture.picturePath,
+          })),
+        })),
+      }))
+      .sort(() => 0.5 - Math.random()) // สุ่มลำดับ
+      .slice(0, amount);               // เลือกจำนวนที่กำหนด
   
     return randomCars;
   }
