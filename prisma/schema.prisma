@@ -124,7 +124,6 @@ model Car {
   categoryId     Int
   brandId        Int
   modelId        Int
-  mileage        Int?
   year           Int
   specifications Json?
   basePrice      Decimal   @db.Decimal(12, 2)

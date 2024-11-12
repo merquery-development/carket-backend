@@ -9,7 +9,6 @@ import {
   Post,
   Put,
   Query,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -22,7 +21,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CarService } from '../services/car.service';
-import { CarViewInterceptor } from '../utils/carviewIntercep';
 import { CreateCarDto, UpdateCarDto } from '../utils/dto/car.dto';
 @ApiTags('cars')
 @Controller('cars')
@@ -156,35 +154,7 @@ export class CarController {
       );
     }
   }
-  //change to carpost
-  @Get('recommended')
-  @ApiOperation({ summary: 'Get recommended cars' }) // แสดงรายละเอียดของ API
-  @ApiQuery({
-    name: 'amount',
-    required: true,
-    type: Number,
-    description: 'Number of cars to recommend',
-  })
-  async getRecommendedCars(
-    @Query('amount') amount: number, // รับจำนวนที่ต้องการแนะนำจาก query
-  ) {
-    if (!amount || amount <= 0) {
-      throw new HttpException(
-        'Amount must be greater than 0',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
 
-    try {
-      const recommendedCars = await this.carService.getRecommendedCars(amount);
-      return recommendedCars;
-    } catch (error) {
-      throw new HttpException(
-        { message: 'Error fetching recommended cars', error: error.message },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
   @Get('brand')
   @ApiOperation({ summary: 'Get all brand' })
   async getAllBrand() {
@@ -214,8 +184,6 @@ export class CarController {
   @Get('car-pic/carId/:carId')
   @ApiOperation({ summary: 'Get all carpic' })
   async getAllCarPics(@Param('carId') carId: string) {
-
-
     return this.carService.getAllCarPics(Number(carId));
   }
 

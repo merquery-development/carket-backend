@@ -11,6 +11,7 @@ import { CarController } from './controllers/car.controller';
 import { CarPostController } from './controllers/carpost.controller';
 import { CustomerController } from './controllers/customer.controller';
 import { FileUploadController } from './controllers/file.controller';
+import { ReviewController } from './controllers/review.controller';
 import { RoleController } from './controllers/role.controller';
 import { VendorController } from './controllers/vendor.controller';
 import { CarPostGuard } from './guards/carpost.guard';
@@ -26,7 +27,6 @@ import { VendorService } from './services/vendor.service';
 import { CarViewInterceptor } from './utils/carviewIntercep';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
-import { ReviewController } from './controllers/review.controller';
 @Module({
   imports: [
     PassportModule,
@@ -43,7 +43,7 @@ import { ReviewController } from './controllers/review.controller';
       signOptions: { expiresIn: '1d' },
     }),
     CacheModule.register({
-    
+      ttl: 0,
       isGlobal: true,
     }),
   ],
@@ -55,13 +55,13 @@ import { ReviewController } from './controllers/review.controller';
     FileUploadController,
     CarPostController,
     RoleController,
-    ReviewController
+    ReviewController,
   ],
   providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
-    },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor,
+    // },
     AppService,
     PrismaService,
     VendorService,

@@ -1,16 +1,11 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { getCarsAndStats } from '../utils/car.uti';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 @Injectable()
 export class CarPostService {
-  constructor(
-    private readonly prisma: PrismaService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
   async createCarPost(createCarPostDto: CreateCarPostDto) {
     try {
       const result = await this.prisma.carPost.create({
@@ -192,7 +187,70 @@ export class CarPostService {
       };
     }
 
-
     return result;
   }
-}
+  async getRecommendedCars(amount: number) {
+    const carPosts = await this.prisma.carPost.findMany({
+      select: {
+        id: true,
+        year: true,
+        mileage: true,
+        price: true,
+        vendor: {
+          select: {
+            address: true,
+            name: true,
+          },
+        },
+        pictures: {
+          select: {
+            pictureName: true,
+            picturePath: true,
+          },
+        },
+        car: {
+          select: {
+            Category: {
+              select: {
+                name: true,
+              },
+            },
+            Model: {
+              select: {
+                name: true,
+              },
+            },
+            Brand: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  
+    // สุ่มและเลือกจำนวนรถที่ต้องการ
+    const randomCars = carPosts
+      .sort(() => Math.random() - 0.5) // สุ่มลำดับทุกครั้งที่เรียกใช้
+      .slice(0, amount); // เลือกจำนวนที่กำหนด
+    console.log(randomCars);
+  
+    // จัดรูปแบบ output
+    return randomCars.map((post) => ({
+      id: post.id,
+      year: post.year,
+      mileage: post.mileage,
+      price: post.price,
+      vendor: {
+        address: post.vendor.address,
+        name: post.vendor.name,
+      },
+      category: post.car?.Category?.name,
+      model: post.car?.Model?.name,
+      brand: post.car?.Brand?.name,
+      pictures: post.pictures.map((picture) =>
+        `${picture.picturePath}/${picture.pictureName}`
+      ), // เก็บทุกรูปในรูปแบบ array ของ string path
+    }));
+  }}  

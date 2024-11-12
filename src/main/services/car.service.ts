@@ -27,69 +27,7 @@ export class CarService {
       ...params, // Pass other params dynamically
     });
   }
-  async getRecommendedCars(amount: number) {
-    const cars = await this.prisma.car.findMany({
-      orderBy: {
-        id: 'asc',
-      },
-      select: {
-        id: true,
-        year: true,
-        mileage: true,
-        Category: {
-          select: {
-            name: true,
-          },
-        },
-        Brand: {
-          select: {
-            name: true,
-          },
-        },
-        Model: {
-          select: {
-            name: true,
-          },
-        },
-        posts: {
-          select: {
-            price: true,
-            mileage: true,
-            pictures: {
-              select: {
-                id: true,
-                pictureName: true,
-                picturePath: true,
-              },
-              take: 1, // เลือกเพียงรูปภาพแรกสำหรับแต่ละ post
-            },
-          },
-        },
-      },
-    });
-  
-    // ปรับรูปแบบ output
-    const formattedCars = cars.map(car => ({
-      id: car.id,
-      year: car.year,
-      mileage: car.mileage,
-      Category: car.Category.name, // แสดง Category เป็น string
-      Brand: car.Brand.name,       // แสดง Brand เป็น string
-      Model: car.Model.name,
-      posts: car.posts.map(post => ({
-        price: post.price,
-        mileage: post.mileage,
-        pictures: post.pictures.map(picture => ({
-          id: picture.id,
-          pictureName: picture.pictureName,
-          picturePath: picture.picturePath,
-        })),
-      })),
-    }));
-  
-    return formattedCars;
-  }
-  
+
   async createCar(createCarDto: CreateCarDto) {
     try {
       const result = await this.prisma.car.create({
