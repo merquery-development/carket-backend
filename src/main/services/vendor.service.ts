@@ -213,4 +213,17 @@ export class VendorService {
   })
    return user
  }
+ async updateVendorBanner(
+  vendorId: number,
+  pictureName: string,
+  picturePath: string,
+) {
+  await this.prisma.vendorBanner.create({
+    data: {
+      vendorId,
+      imageName: '/' + pictureName,
+      imagePath: '/' + picturePath,
+    },
+  });
+}
 }

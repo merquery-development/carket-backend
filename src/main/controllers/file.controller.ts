@@ -6,7 +6,6 @@ import {
   HttpStatus,
   Inject,
   Post,
-  UploadedFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
@@ -26,6 +25,7 @@ import {
   UploadCarPicturesDto,
   UploadCategoryDto,
 } from '../utils/dto/car.dto';
+import { UploadVendorBannerDto } from '../utils/dto/vendor.dto';
 @ApiBearerAuth('defaultBearerAuth')
 @ApiTags('upload')
 @Controller('upload')
@@ -92,7 +92,6 @@ export class FileUploadController {
       type: 'object',
       properties: {
         logo: { type: 'string', format: 'binary' }, // โลโก้ธรรมดา
-        logoActive: { type: 'string', format: 'binary' }, // โลโก้ตอน active
         id: { type: 'integer' }, // ID ของหมวดหมู่
       },
     },
@@ -111,9 +110,8 @@ export class FileUploadController {
     try {
       // ตรวจสอบว่าได้รับไฟล์โลโก้หรือไม่
       const logo = files.find((file) => file.fieldname === 'logo'); // โลโก้ธรรมดา
-      const logoActive = files.find((file) => file.fieldname === 'logoActive'); // โลโก้ active
 
-      if (!logo || !logoActive) {
+      if (!logo) {
         throw new HttpException(
           'Both logo and logoActive files are required',
           HttpStatus.BAD_REQUEST,
@@ -124,7 +122,6 @@ export class FileUploadController {
       const result = await this.fileUploadService.uploadCategoryLogo(
         Number(body.id),
         logo,
-        logoActive,
       );
 
       return result;
@@ -176,7 +173,7 @@ export class FileUploadController {
       const result = await this.fileUploadService.uploadBrandLogo(
         Number(body.id),
         logo,
-        logoLight
+        logoLight,
       );
 
       return result;
@@ -185,6 +182,64 @@ export class FileUploadController {
         error.message || 'File upload failed',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  @Post('upload-banner')
+  @UseInterceptors(AnyFilesInterceptor())
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Upload multiple vendor banner images',
+    type: 'multipart/form-data',
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+        vendorId: {
+          type: 'integer',
+          description: 'ID of the vendor for which banners are being uploaded',
+        },
+      },
+    },
+  })
+  @ApiOperation({ summary: 'Upload vendor banners' })
+  @ApiResponse({ status: 200, description: 'Vendor banners upload successful' })
+  @ApiResponse({
+    status: 400,
+    description: 'No files uploaded or Vendor ID missing',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'File upload failed due to an internal error',
+  })
+  async uploadVendorBanner(
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() body: UploadVendorBannerDto,
+  ): Promise<{ urls: string[] }> {
+    const { vendorId } = body;
+
+    // Validate files and vendorId presence
+    if (!files || files.length === 0) {
+      throw new HttpException('No files uploaded', HttpStatus.BAD_REQUEST);
+    }
+
+    if (!vendorId) {
+      throw new HttpException('Vendor ID is required', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      // Call the service to upload banner images
+      const fileUrls = await this.fileUploadService.uploadVendorBanner(
+        files,
+        Number(vendorId),
+      );
+
+      return { urls: fileUrls };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

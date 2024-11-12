@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
 import { CreateCustomerDto } from '../utils/dto/customer.dto';
+import { CreateReviewDto } from '../utils/dto/review.dto';
 import { firstPartUid } from '../utils/pagination';
 @Injectable()
 export class CustomerService {
@@ -11,14 +12,13 @@ export class CustomerService {
     return await bcrypt.hash(password, saltRounds);
   }
 
-
-  async getCustomer(){
+  async getCustomer() {
     const result = this.prisma.customer.findMany({
-      where  :{
-        deletedAt : null
-      }
-    })
-    return result
+      where: {
+        deletedAt: null,
+      },
+    });
+    return result;
   }
   async createCustomer(createCustomerDto: CreateCustomerDto) {
     let hashedPassword;
@@ -81,7 +81,7 @@ export class CustomerService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
-  async getCustomerByUid(uid: string){
+  async getCustomerByUid(uid: string) {
     const result = await this.prisma.customer.findFirst({
       where: {
         uid: uid,
@@ -91,5 +91,47 @@ export class CustomerService {
       throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);
     }
     return result;
+  }
+
+  // สร้างรีวิวใหม่
+  async createReview(createReviewDto: CreateReviewDto) {
+    const { customerId, carId, rating, comment } = createReviewDto;
+
+    // ตรวจสอบความถูกต้องของ rating
+    if (rating < 1 || rating > 5) {
+      throw new HttpException(
+        'Rating must be between 1 and 5',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return await this.prisma.review.create({
+      data: {
+        customerId,
+        carId, // เพิ่ม carId เพื่อเชื่อมโยงกับรถ
+        rating,
+        comment,
+      },
+    });
+  }
+
+  // ดึงข้อมูลรีวิวทั้งหมดของลูกค้า
+  async getReviewsByCustomer(customerId: number) {
+    return await this.prisma.review.findMany({
+      where: { customerId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // คำนวณคะแนนเฉลี่ยของลูกค้า
+  async getAverageRating(customerId: number) {
+    const reviews = await this.prisma.review.findMany({
+      where: { customerId },
+    });
+
+    if (reviews.length === 0) return 0;
+
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    return totalRating / reviews.length;
   }
 }

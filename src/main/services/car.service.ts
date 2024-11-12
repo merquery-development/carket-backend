@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { getCarsAndStats } from '../utils/car.uti';
 import { CreateCarDto, UpdateCarDto } from '../utils/dto/car.dto';
@@ -31,7 +30,7 @@ export class CarService {
   async getRecommendedCars(amount: number) {
     const cars = await this.prisma.car.findMany({
       orderBy: {
-        id: 'asc', // เพื่อให้การค้นหาไม่ชนกันกับ random
+        id: 'asc',
       },
       select: {
         id: true,
@@ -52,11 +51,25 @@ export class CarService {
             name: true,
           },
         },
+        posts: {
+          select: {
+            price: true,
+            mileage: true,
+            pictures: {
+              select: {
+                id: true,
+                pictureName: true, // เพิ่มฟิลด์ชื่อรูปภาพที่ต้องการ
+                picturePath: true, // เพิ่มฟิลด์ชื่อรูปภาพที่ต้องการ
+              },
+            },
+          },
+        },
       },
     });
-
+  
+    // สุ่มลำดับและเลือกจำนวนรถตามที่กำหนด
     const randomCars = cars.sort(() => 0.5 - Math.random()).slice(0, amount);
-
+  
     return randomCars;
   }
   async createCar(createCarDto: CreateCarDto) {
@@ -169,17 +182,14 @@ export class CarService {
   async updateCategoryLogo(
     categoryId: number,
     logoName: string,
-    logoActiveName: string,
     logoPath: string,
-    logoPathActive: string,
   ) {
     await this.prisma.category.update({
       where: { id: categoryId },
       data: {
         logoName: logoName,
-        logoNameActive: logoActiveName,
+
         logoPath: logoPath,
-        logoPathActive: logoPathActive,
       },
     });
   }
@@ -191,8 +201,8 @@ export class CarService {
     await this.prisma.carPicture.create({
       data: {
         carId,
-        pictureName,
-        picturePath,
+        pictureName: '/' + pictureName,
+        picturePath: '/' + picturePath,
         type: 'car',
       },
     });

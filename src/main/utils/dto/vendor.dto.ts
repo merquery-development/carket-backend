@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 export class CreateVendorUserDto {
   @IsNumber()
   @IsOptional() // ไม่จำเป็นต้องใส่ vendorId หากเป็น OAuth
@@ -52,4 +58,8 @@ export class CreateVendorUserDto {
     example: '1',
   })
   roleId: number;
+}
+export class UploadVendorBannerDto {
+  @IsNotEmpty()
+  vendorId: string;
 }

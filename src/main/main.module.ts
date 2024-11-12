@@ -26,6 +26,7 @@ import { VendorService } from './services/vendor.service';
 import { CarViewInterceptor } from './utils/carviewIntercep';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
+import { ReviewController } from './controllers/review.controller';
 @Module({
   imports: [
     PassportModule,
@@ -54,6 +55,7 @@ import { GoogleStrategy } from './utils/strategy/google.strategy';
     FileUploadController,
     CarPostController,
     RoleController,
+    ReviewController
   ],
   providers: [
     {
