@@ -27,7 +27,7 @@ export class CarService {
       ...params, // Pass other params dynamically
     });
   }
-  async getRecommendedCars(amount: number) {
+  async getRecommendedCarsAllpic(amount: number) {
     const cars = await this.prisma.car.findMany({
       orderBy: {
         id: 'asc',
@@ -84,6 +84,71 @@ export class CarService {
             pictureName: picture.pictureName,
             picturePath: picture.picturePath,
           })),
+        })),
+      }))
+      .sort(() => 0.5 - Math.random()) // สุ่มลำดับ
+      .slice(0, amount);               // เลือกจำนวนที่กำหนด
+  
+    return randomCars;
+  }
+
+  async getRecommendedCars(amount: number) {
+    const cars = await this.prisma.car.findMany({
+      orderBy: {
+        id: 'asc',
+      },
+      select: {
+        id: true,
+        year: true,
+        mileage: true,
+        Category: {
+          select: {
+            name: true,
+          },
+        },
+        Brand: {
+          select: {
+            name: true,
+          },
+        },
+        Model: {
+          select: {
+            name: true,
+          },
+        },
+        posts: {
+          select: {
+            price: true,
+            mileage: true,
+            pictures: {
+              select: {
+                id: true,
+                pictureName: true,
+                picturePath: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  
+    // ปรับรูปแบบ output, เลือกเฉพาะรูปแรก, และสุ่มข้อมูล
+    const randomCars = cars
+      .map(car => ({
+        id: car.id,
+        year: car.year,
+        mileage: car.mileage,
+        category: car.Category.name, // เปลี่ยนเป็น string
+        brand: car.Brand.name,       // เปลี่ยนเป็น string
+        model: car.Model.name,
+        posts: car.posts.map(post => ({
+          price: post.price,
+          mileage: post.mileage,
+          picture: post.pictures[0] ? { // เลือกเฉพาะรูปแรก
+            id: post.pictures[0].id,
+            pictureName: post.pictures[0].pictureName,
+            picturePath: post.pictures[0].picturePath,
+          } : null,
         })),
       }))
       .sort(() => 0.5 - Math.random()) // สุ่มลำดับ
