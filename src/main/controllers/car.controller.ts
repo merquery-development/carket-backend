@@ -169,7 +169,7 @@ export class CarController {
     }
   }
   @Get('category')
-  @ApiOperation({ summary: 'Get all brand' })
+  @ApiOperation({ summary: 'Get all category' })
   async getAllCategory() {
     try {
       const categories = await this.carService.getAllCategory();

@@ -9,35 +9,26 @@ export async function getCarsAndStats({
   categoryId = null,
   priceMin = null,
   priceMax = null,
-  mileageMin = null,
-  mileageMax = null,
   sortBy = 'createdAt',
   sortOrder = 'asc',
   customSelect = {},
   fieldMapping = {
-    priceField: 'basePrice', // Default to Car's basePrice
-    mileageField: 'mileage',
+    priceField: 'basePrice',
     brandIdField: 'brandId',
     categoryIdField: 'categoryId',
   },
 }) {
   const { skip, take } = getPagination(page, pageSize);
 
-  // Dynamically apply field mappings
   const where = {
     ...(brandId ? { [fieldMapping.brandIdField]: { equals: brandId } } : {}),
-    ...(categoryId
-      ? { [fieldMapping.categoryIdField]: { equals: categoryId } }
-      : {}),
+    ...(categoryId ? { [fieldMapping.categoryIdField]: { equals: categoryId } } : {}),
     ...(priceMin !== null && priceMax !== null
       ? { [fieldMapping.priceField]: { gte: priceMin, lte: priceMax } }
       : {}),
-    ...(mileageMin !== null && mileageMax !== null
-      ? { [fieldMapping.mileageField]: { gte: mileageMin, lte: mileageMax } }
-      : {}),
   };
 
-  const [items, total, mileageStats, priceStats] = await Promise.all([
+  const [items, total, priceStats] = await Promise.all([
     prismaModel.findMany({
       skip,
       take,
@@ -51,19 +42,7 @@ export async function getCarsAndStats({
     prismaModel.count({ where }),
 
     prismaModel.groupBy({
-      by: [fieldMapping.mileageField],
-      _count: true,
-      where,
-      having: {
-        [fieldMapping.mileageField]: {
-          gte: mileageMin ?? 0,
-          lte: mileageMax ?? 1000000,
-        },
-      },
-    }),
-
-    prismaModel.groupBy({
-      by: [fieldMapping.priceField], // Dynamically use price/basePrice
+      by: [fieldMapping.priceField],
       _count: true,
       where,
       having: {
@@ -80,12 +59,8 @@ export async function getCarsAndStats({
     total,
     page: page || 1,
     pageSize: pageSize || total,
-    mileageStats: mileageStats.map((stat) => ({
-      mileage: stat[fieldMapping.mileageField],
-      count: stat._count,
-    })),
     priceStats: priceStats.map((stat) => ({
-      price: stat[fieldMapping.priceField], // Dynamically use price/basePrice
+      price: stat[fieldMapping.priceField],
       count: stat._count,
     })),
   };

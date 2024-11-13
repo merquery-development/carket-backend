@@ -9,24 +9,23 @@ export class CarService {
 
   async getCars(params) {
     return await getCarsAndStats({
-      prismaModel: this.prisma.car, // Use Car model
+      prismaModel: this.prisma.car,
       customSelect: {
         id: true,
         basePrice: true,
-        mileage: true,
         year: true,
         Category: { select: { name: true } },
         Brand: { select: { name: true } },
       },
       fieldMapping: {
-        priceField: 'basePrice', // Use Car's basePrice
-        mileageField: 'mileage',
+        priceField: 'basePrice',
         brandIdField: 'brandId',
         categoryIdField: 'categoryId',
       },
-      ...params, // Pass other params dynamically
+      ...params,
     });
   }
+  
 
   async createCar(createCarDto: CreateCarDto) {
     try {
