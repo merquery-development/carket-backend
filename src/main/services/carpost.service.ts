@@ -250,7 +250,7 @@ export class CarPostService {
       model: post.car?.Model?.name,
       brand: post.car?.Brand?.name,
       pictures: post.pictures.map((picture) =>
-        `${picture.picturePath}/${picture.pictureName}`
+        `${picture.picturePath}${picture.pictureName}`
       ), // เก็บทุกรูปในรูปแบบ array ของ string path
     }));
   }}  
