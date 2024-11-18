@@ -8,18 +8,19 @@ datasource db {
 }
 
 model Vendor {
-  id        Int          @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   name      String
   email     String
   phone     String
   address   String
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @default(now()) @updatedAt @map("updated_at")
   users     VendorUser[]
-   banners   VendorBanner[]
+  banners   VendorBanner[]
   carPosts  CarPost[]
     @@map("vendor")
 }
+
 model VendorBanner {
   id           Int      @id @default(autoincrement())
   vendorId     Int      @map("vendor_id") // Foreign key to Vendor
@@ -54,7 +55,7 @@ model VendorUser {
   deletedAt          DateTime? @map("deleted_at")
   vendor             Vendor?   @relation(fields: [vendorId], references: [id])
   role               Role?     @relation(fields: [roleId], references: [id])
-  @map 
+
 }
 
 //backoffice
@@ -132,7 +133,6 @@ model RolePermission {
   permission   Permission @relation(fields: [permissionId], references: [id])
 }
 
-
 model Car {
   id             Int       @id @default(autoincrement())
   categoryId     Int
@@ -176,12 +176,12 @@ model CarPost {
 }
 
 model Category {
-  id             Int      @id @default(autoincrement())
-  logoName       String?  @map("logo_name")
-  logoPath       String?  @map("logo_path")
-  name           String
-  createdAt      DateTime @default(now()) @map("created_at")
-  cars           Car[]
+  id        Int      @id @default(autoincrement())
+  logoName  String?  @map("logo_name")
+  logoPath  String?  @map("logo_path")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  cars      Car[]
 }
 
 model Brand {

@@ -11,7 +11,6 @@ import { CreateVendorUserDto } from '../utils/dto/vendor.dto';
 import { firstPartUid, getPagination } from '../utils/pagination';
 import { AuthService } from './auth.service';
 import { MailerService } from './mailer.service';
-import { log } from 'console';
 @Injectable()
 export class VendorService {
   constructor(
@@ -130,12 +129,10 @@ export class VendorService {
         );
       }
       console.log(result);
-      
+
       return { message: 'User created successfully' };
     } catch (error) {
-    console.log(error);
-    
-    
+      console.log(error);
 
       throw new HttpException(
         'Error while creating vendor user',
@@ -177,7 +174,6 @@ export class VendorService {
     }
   }
 
-  
   async getVendorByuid(uid: string) {
     const result = await this.prisma.vendorUser.findFirst({
       where: {
@@ -205,29 +201,28 @@ export class VendorService {
     return { message: 'update successfull' };
   }
 
- async getRoleByVendorUid(uuid :string,roleName : string){
-  const user = await this.prisma.vendorUser.findFirst({
-    where : {
-      uid: uuid,   
-      role : {
-        name : roleName
-      }
-    },
-
-  })
-   return user
- }
- async updateVendorBanner(
-  vendorId: number,
-  pictureName: string,
-  picturePath: string,
-) {
-  await this.prisma.vendorBanner.create({
-    data: {
-      vendorId,
-      imageName: '/' + pictureName,
-      imagePath: '/' + picturePath,
-    },
-  });
-}
+  async getRoleByVendorUid(uuid: string, roleName: string) {
+    const user = await this.prisma.vendorUser.findFirst({
+      where: {
+        uid: uuid,
+        role: {
+          name: roleName,
+        },
+      },
+    });
+    return user;
+  }
+  async updateVendorBanner(
+    vendorId: number,
+    pictureName: string,
+    picturePath: string,
+  ) {
+    await this.prisma.vendorBanner.create({
+      data: {
+        vendorId,
+        imageName: '/' + pictureName,
+        imagePath: '/' + picturePath,
+      },
+    });
+  }
 }

@@ -5,8 +5,12 @@ import { getCarsAndStats } from '../utils/car.uti';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 @Injectable()
 export class CarPostService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
   async createCarPost(createCarPostDto: CreateCarPostDto) {
+    // @comment no vendor validation
+    // @comment no price validatation < 0 
+    // @comment no year validation < 0 
+    // @comment why also create view count ? default should be zero
     try {
       const result = await this.prisma.carPost.create({
         data: {
@@ -38,6 +42,8 @@ export class CarPostService {
   }
 
   async updateCarPost(id: string, updateCarPostDto: UpdateCarPostDto) {
+    // @comment no vendor validation, to check if the vendor update there own carpost of someone else's carpost
+    // @comment also no data validation
     try {
       const result = await this.prisma.carPost.update({
         where: { id: Number(id) },
@@ -60,6 +66,7 @@ export class CarPostService {
   }
 
   async deleteSoftCarPost(id: string) {
+    // @comment no vendor validation
     try {
       const result = await this.prisma.carPost.update({
         where: { id: Number(id) },
@@ -229,7 +236,7 @@ export class CarPostService {
         },
       },
     });
-  
+
     // สุ่มและเลือกจำนวนรถที่ต้องการ
     const randomCars = carPosts
       .sort(() => Math.random() - 0.5) // สุ่มลำดับทุกครั้งที่เรียกใช้
