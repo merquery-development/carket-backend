@@ -8,25 +8,28 @@ datasource db {
 }
 
 model Vendor {
-  id        Int          @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   name      String
   email     String
   phone     String
   address   String
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @default(now()) @updatedAt @map("updated_at")
   users     VendorUser[]
-   banners   VendorBanner[]
+  banners   VendorBanner[]
   carPosts  CarPost[]
+
+  // @comment where is table name mapping and column
 }
+
 model VendorBanner {
-  id           Int      @id @default(autoincrement())
-  vendorId     Int      @map("vendor_id") // Foreign key to Vendor
-  imagePath    String?   @map("image_path") // Path to the banner image
-  imageName    String?   @map("image_name") // Image file name
-  createdAt    DateTime @default(now()) @map("created_at")
-  
-  vendor       Vendor   @relation(fields: [vendorId], references: [id])
+  id        Int      @id @default(autoincrement())
+  vendorId  Int      @map("vendor_id") // Foreign key to Vendor
+  imagePath String?  @map("image_path") // Path to the banner image
+  imageName String?  @map("image_name") // Image file name
+  createdAt DateTime @default(now()) @map("created_at")
+
+  vendor Vendor @relation(fields: [vendorId], references: [id])
 }
 
 model VendorUser {
@@ -43,19 +46,18 @@ model VendorUser {
   lastName           String?   @map("last_name")
   profilePicturePath String?   @map("profile_picture_path")
   profilePictureName String?   @map("profile_picture_name")
-  
-  isEnable           Boolean   @default(true) @map("(is_enable)")
-  password           String? // อนุญาตให้เป็น null ได้ในกรณีที่เป็น OAuth
-  roleId             Int?
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
-  deletedAt          DateTime? @map("deleted_at")
-  vendor             Vendor?   @relation(fields: [vendorId], references: [id])
-  role               Role?     @relation(fields: [roleId], references: [id])
+
+  isEnable  Boolean   @default(true) @map("(is_enable)")
+  password  String? // อนุญาตให้เป็น null ได้ในกรณีที่เป็น OAuth
+  roleId    Int?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  vendor    Vendor?   @relation(fields: [vendorId], references: [id])
+  role      Role?     @relation(fields: [roleId], references: [id])
 }
 
 //backoffice
-
 
 model Customer {
   id                 Int           @id @default(autoincrement())
@@ -78,19 +80,19 @@ model Customer {
   updatedAt          DateTime      @default(now()) @updatedAt @map("updated_at")
   deletedAt          DateTime?     @map("deleted_at")
   carViews           UserCarView[]
-  reviews            Review[]      // เพิ่ม relation field นี้
+  reviews            Review[] // เพิ่ม relation field นี้
 }
 
 model Review {
-  id          Int       @id @default(autoincrement())
-  customerId  Int
-  carId       Int       // เพิ่ม carId field เพื่อเชื่อมโยงกับ Car
-  customer    Customer  @relation(fields: [customerId], references: [id])
-  car         Car       @relation(fields: [carId], references: [id]) // เพิ่มความสัมพันธ์กับ Car
-  rating      Int       // คะแนน 1-5
-  comment     String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         Int      @id @default(autoincrement())
+  customerId Int
+  carId      Int // เพิ่ม carId field เพื่อเชื่อมโยงกับ Car
+  customer   Customer @relation(fields: [customerId], references: [id])
+  car        Car      @relation(fields: [carId], references: [id]) // เพิ่มความสัมพันธ์กับ Car
+  rating     Int // คะแนน 1-5
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Role {
@@ -118,7 +120,6 @@ model RolePermission {
   permission   Permission @relation(fields: [permissionId], references: [id])
 }
 
-
 model Car {
   id             Int       @id @default(autoincrement())
   categoryId     Int
@@ -135,7 +136,7 @@ model Car {
   Category       Category  @relation(fields: [categoryId], references: [id])
   Brand          Brand     @relation(fields: [brandId], references: [id])
   Model          Model     @relation(fields: [modelId], references: [id])
-  reviews        Review[]  // เพิ่ม relation field นี้
+  reviews        Review[] // เพิ่ม relation field นี้
 }
 
 model CarPost {
@@ -161,12 +162,12 @@ model CarPost {
 }
 
 model Category {
-  id             Int      @id @default(autoincrement())
-  logoName       String?  @map("logo_name")
-  logoPath       String?  @map("logo_path")
-  name           String
-  createdAt      DateTime @default(now()) @map("created_at")
-  cars           Car[]
+  id        Int      @id @default(autoincrement())
+  logoName  String?  @map("logo_name")
+  logoPath  String?  @map("logo_path")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  cars      Car[]
 }
 
 model Brand {

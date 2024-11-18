@@ -19,7 +19,7 @@ export class VendorService {
     private readonly mailerService: MailerService,
     @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
-  ) {}
+  ) { }
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
     return await bcrypt.hash(password, saltRounds);
@@ -131,7 +131,7 @@ export class VendorService {
 
       return { message: 'User created successfully' };
     } catch (error) {
-    
+      console.error(error);
 
       throw new HttpException(
         'Error while creating vendor user',
@@ -173,7 +173,7 @@ export class VendorService {
     }
   }
 
-  
+
   async getVendorByuid(uid: string) {
     const result = await this.prisma.vendorUser.findFirst({
       where: {
@@ -201,29 +201,29 @@ export class VendorService {
     return { message: 'update successfull' };
   }
 
- async getRoleByVendorUid(uuid :string,roleName : string){
-  const user = await this.prisma.vendorUser.findFirst({
-    where : {
-      uid: uuid,   
-      role : {
-        name : roleName
-      }
-    },
+  async getRoleByVendorUid(uuid: string, roleName: string) {
+    const user = await this.prisma.vendorUser.findFirst({
+      where: {
+        uid: uuid,
+        role: {
+          name: roleName
+        }
+      },
 
-  })
-   return user
- }
- async updateVendorBanner(
-  vendorId: number,
-  pictureName: string,
-  picturePath: string,
-) {
-  await this.prisma.vendorBanner.create({
-    data: {
-      vendorId,
-      imageName: '/' + pictureName,
-      imagePath: '/' + picturePath,
-    },
-  });
-}
+    })
+    return user
+  }
+  async updateVendorBanner(
+    vendorId: number,
+    pictureName: string,
+    picturePath: string,
+  ) {
+    await this.prisma.vendorBanner.create({
+      data: {
+        vendorId,
+        imageName: '/' + pictureName,
+        imagePath: '/' + picturePath,
+      },
+    });
+  }
 }

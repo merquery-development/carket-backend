@@ -1,3 +1,5 @@
+
+// @comment did you forget api property ?
 export class CreateReviewDto {
   customerId: number;
   carId: number;
