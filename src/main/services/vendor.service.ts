@@ -128,16 +128,10 @@ export class VendorService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      console.log(result);
 
       return { message: 'User created successfully' };
     } catch (error) {
-      console.log(error);
-
-      throw new HttpException(
-        'Error while creating vendor user',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
   catch(error) {
@@ -179,6 +173,25 @@ export class VendorService {
       where: {
         uid: uid,
       },
+      select : {
+        id: true,
+        uid : true,
+        vendorId :true,
+        username : true,
+        email : true,
+        isEmailVerified : true,
+        mobileNumber : true,
+        lastLogin : true,
+        nickName : true,
+        firstName : true,
+        lastName : true,
+        profilePicturePath : true,
+        profilePictureName : true,
+        isEnable : true,
+        roleId : true,
+        createdAt :true,
+        updatedAt : true
+      }
     });
     if (!result) {
       throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);

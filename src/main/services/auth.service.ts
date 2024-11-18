@@ -64,7 +64,7 @@ export class AuthService {
 
     await this.vendorService.updateLastLogin(vendor.uid);
     const payload = {
-      uid: vendor.uid,
+      vendorUid: vendor.uid,
       username: vendor.username,
       email: vendor.email,
     };
@@ -119,7 +119,7 @@ export class AuthService {
     
     await this.customerService.updateLastLoginCustomer(customer.uid);
     const payload = {
-      uid: customer.uid,
+      customerUid: customer.uid,
       username: customer.username,
       email: customer.email,
     };

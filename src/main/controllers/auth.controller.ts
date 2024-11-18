@@ -105,7 +105,7 @@ export class AuthController {
   @Get('profile')
   @HttpCode(200)
   @ApiBearerAuth('defaultBearerAuth')
-  // @UseGuards(CustomerOrGuestGuard)
+  @UseGuards(CustomerOrGuestGuard)
   @ApiOperation({ summary: 'Get profile user from jwt token' })
   @ApiResponse({ status: 200, description: 'request sucess' })
   async getProfile(@Req() request: Request) {

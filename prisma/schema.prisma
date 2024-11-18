@@ -41,13 +41,13 @@ model VendorUser {
   isEmailVerified    Boolean?  @default(false) @map("is_email_verified")
   mobileNumber       String?   @map("mobile_number") // เบอร์โทรศัพท์มือถือ
   lastLogin          DateTime? @map("last_login")
-  nickName           String?   @map(" nick_name")
+  nickName           String?   @map("nick_name")
   firstName          String?   @map("first_name")
   lastName           String?   @map("last_name")
   profilePicturePath String?   @map("profile_picture_path")
   profilePictureName String?   @map("profile_picture_name")
   
-  isEnable           Boolean   @default(true) @map("(is_enable)")
+  isEnable           Boolean   @default(true) @map("is_enable")
   password           String? // อนุญาตให้เป็น null ได้ในกรณีที่เป็น OAuth
   roleId             Int? @map("role_id")
   createdAt          DateTime  @default(now()) @map("created_at")
@@ -84,7 +84,7 @@ model Customer {
   username           String?
   email              String?
   password           String?
-  isEnable           Boolean       @default(true) @map("(is_enable)")
+  isEnable           Boolean       @default(true) @map("is_enable")
   profilePicturePath String?       @map("profile_picture_path")
   profilePictureName String?       @map("profile_picture_name")
   isOauth            Boolean       @default(false) @map("is_oauth")
@@ -146,7 +146,7 @@ model Car {
   id             Int       @id @default(autoincrement())
   categoryId     Int   @map("category_id")
   brandId        Int    @map("brand_id")
-  modelId        Int  @map("model")
+  modelId        Int  @map("model_id")
   year           Int
   specifications Json?
   basePrice      Decimal   @db.Decimal(12, 2) @map("base_price")

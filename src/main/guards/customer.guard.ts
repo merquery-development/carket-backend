@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { AuthService } from '../services/auth.service';
 import { CustomerService } from '../services/customer.service';
-import { log } from 'console';
+
 
 @Injectable()
 export class CustomerOrGuestGuard implements CanActivate {
@@ -28,17 +28,18 @@ export class CustomerOrGuestGuard implements CanActivate {
 
     if (!token) {
       // If no token, the user is a guest
-      request['isGuest'] = true;
+      request['role'] = 'guest';
       return true; // Allow guest access
     }
 
+    let payload;
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
+      payload = await this.jwtService.verifyAsync(token, {
         secret: process.env.ACCESS_TOKEN_SECRET,
       });
-      request['customer'] = payload;
+   
     } catch {
-      throw new UnauthorizedException('invalid token');
+      throw new UnauthorizedException('Invalid token');
     }
 
     const profile = await this.authService.getProfile(token);
@@ -46,22 +47,44 @@ export class CustomerOrGuestGuard implements CanActivate {
       throw new HttpException('Profile not found', HttpStatus.UNAUTHORIZED);
     }
 
-    const user = await this.customerService
-      .getCustomerByUid(profile.uid)
-      .catch((error) => {
-        throw new UnauthorizedException('Authguard error', error.message);
-      });
-
-    if (!user || !user.isEnable) {
-      throw new UnauthorizedException('User is not enabled');
+    // Handle vendorUser, customer, or unauthorized users
+    const userRole = await this.determineUserRole(profile);
+    if (!userRole) {
+      throw new UnauthorizedException('User role not recognized');
     }
 
-    request['isGuest'] = false;
-    return true; // Allow customer access
+    request['role'] = userRole; // 'vendorUser', 'customer', or 'guest'
+    request['userProfile'] = profile;
+
+    if (userRole === 'customer') {
+      const customer = await this.customerService
+        .getCustomerByUid(profile.customerUid)
+        .catch((error) => {
+          throw new UnauthorizedException('Authguard error', error.message);
+        });
+
+      if (!customer || !customer.isEnable) {
+        throw new UnauthorizedException('Customer is not enabled');
+      }
+    }
+
+    return true; // Allow access based on role
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
+  }
+
+  private async determineUserRole(
+    profile: any,
+  ): Promise<'vendorUser' | 'customer' | 'guest' | null> {
+    if (profile.vendorUid) {
+      return 'vendorUser';
+    } else if (profile.customerUid) {
+      return 'customer';
+    } else {
+      return null; // Role not recognized
+    }
   }
 }

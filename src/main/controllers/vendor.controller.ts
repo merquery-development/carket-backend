@@ -38,7 +38,7 @@ export class VendorController {
   }
   @Get('vendor')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Get All Data of vendor require login' })
+  @ApiOperation({ summary: 'Get All Data of vendor that verified email' })
   @ApiOkResponse({
     description: 'All vendor list',
   })
