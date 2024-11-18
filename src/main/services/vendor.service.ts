@@ -11,6 +11,7 @@ import { CreateVendorUserDto } from '../utils/dto/vendor.dto';
 import { firstPartUid, getPagination } from '../utils/pagination';
 import { AuthService } from './auth.service';
 import { MailerService } from './mailer.service';
+import { log } from 'console';
 @Injectable()
 export class VendorService {
   constructor(
@@ -128,9 +129,12 @@ export class VendorService {
           HttpStatus.BAD_REQUEST,
         );
       }
-
+      console.log(result);
+      
       return { message: 'User created successfully' };
     } catch (error) {
+    console.log(error);
+    
     
 
       throw new HttpException(

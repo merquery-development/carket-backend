@@ -57,6 +57,9 @@ export class UploadBrandDto {
 export class UpdateCarDto extends PartialType(CreateCarDto) {}
 
 export class CreateCarPostDto {
+  @ApiProperty({
+    example : 1
+  })
   @IsInt()
   carId: number;
 

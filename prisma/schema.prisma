@@ -18,6 +18,7 @@ model Vendor {
   users     VendorUser[]
    banners   VendorBanner[]
   carPosts  CarPost[]
+    @@map("vendor")
 }
 model VendorBanner {
   id           Int      @id @default(autoincrement())
@@ -27,6 +28,7 @@ model VendorBanner {
   createdAt    DateTime @default(now()) @map("created_at")
   
   vendor       Vendor   @relation(fields: [vendorId], references: [id])
+    @@map("vendor_banner")
 }
 
 model VendorUser {
@@ -52,14 +54,25 @@ model VendorUser {
   deletedAt          DateTime? @map("deleted_at")
   vendor             Vendor?   @relation(fields: [vendorId], references: [id])
   role               Role?     @relation(fields: [roleId], references: [id])
+  @map 
 }
 
 //backoffice
 
+model CustomerFavorite {
+  id          Int      @id @default(autoincrement())
+  customerUid   String     @map("customer_Uid") // Foreign key to Customer
+  postId       Int      @map("post_id")      // Foreign key to Car
+  createdAt   DateTime @default(now())     @map("created_at")
 
+  customer    Customer @relation(fields: [customerUid], references: [uid])
+  post         CarPost      @relation(fields: [postId], references: [id])
+
+  @@unique([customerUid, postId]) // Ensure each customer can favorite a car only once
+}
 model Customer {
   id                 Int           @id @default(autoincrement())
-  uid                String?       @unique @default(uuid()) @map("uid")
+  uid                String       @unique @default(uuid()) @map("uid")
   mobileNumber       String?       @map("mobile_number")
   lastLogin          DateTime?     @map("last_login")
   nickName           String?       @map(" nick_name")
@@ -79,14 +92,15 @@ model Customer {
   deletedAt          DateTime?     @map("deleted_at")
   carViews           UserCarView[]
   reviews            Review[]      // เพิ่ม relation field นี้
+   favorites          CustomerFavorite[]  // New relation field
 }
 
 model Review {
   id          Int       @id @default(autoincrement())
   customerId  Int
-  carId       Int       // เพิ่ม carId field เพื่อเชื่อมโยงกับ Car
+  carId       Int       // เชื่อมโยงกับ CarPost แทนที่จะเป็น Car
   customer    Customer  @relation(fields: [customerId], references: [id])
-  car         Car       @relation(fields: [carId], references: [id]) // เพิ่มความสัมพันธ์กับ Car
+  car         CarPost   @relation(fields: [carId], references: [id]) // ความสัมพันธ์กับ CarPost
   rating      Int       // คะแนน 1-5
   comment     String?
   createdAt   DateTime  @default(now())
@@ -135,7 +149,7 @@ model Car {
   Category       Category  @relation(fields: [categoryId], references: [id])
   Brand          Brand     @relation(fields: [brandId], references: [id])
   Model          Model     @relation(fields: [modelId], references: [id])
-  reviews        Review[]  // เพิ่ม relation field นี้
+
 }
 
 model CarPost {
@@ -154,8 +168,9 @@ model CarPost {
   deletedAt             DateTime? @map("deleted_at")
   viewCount             Int?      @map("view_count")
   car                   Car       @relation(fields: [carId], references: [id])
-
+  reviews        Review[]  // เพิ่ม relation field นี้
   vendor      Vendor        @relation(fields: [vendorId], references: [id])
+   favoritedBy       CustomerFavorite[]  // New relation field
   pictures    CarPicture[]
   UserCarView UserCarView[]
 }

@@ -1,12 +1,23 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
 import { CreateCustomerDto } from '../utils/dto/customer.dto';
 import { CreateReviewDto } from '../utils/dto/review.dto';
 import { firstPartUid } from '../utils/pagination';
+import { AuthService } from './auth.service';
 @Injectable()
 export class CustomerService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService, @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
+    
+  ) {}
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
     return await bcrypt.hash(password, saltRounds);
@@ -21,37 +32,44 @@ export class CustomerService {
     return result;
   }
   async createCustomer(createCustomerDto: CreateCustomerDto) {
-    let hashedPassword;
-    const uid = firstPartUid();
-    // ตรวจสอบว่ามี password หรือไม่ ถ้ามีก็ทำการ hash
-    if (createCustomerDto.password) {
-      hashedPassword = await this.hashPassword(createCustomerDto.password);
-    }
+    try {
+      let hashedPassword;
+      const uid = firstPartUid();
+      // ตรวจสอบว่ามี password หรือไม่ ถ้ามีก็ทำการ hash
+      if (createCustomerDto.password) {
+        hashedPassword = await this.hashPassword(createCustomerDto.password);
+      }
 
-    const result = await this.prisma.customer.create({
-      data: {
-        username: createCustomerDto.username || null, // username อาจเป็น null หากเป็น OAuth
-        email: createCustomerDto.email, // email ต้องมาจาก OAuth หรือการลงทะเบียนปกติ
-        uid: uid,
-        firstName: createCustomerDto.firstname,
-        lastName: createCustomerDto.lastname || null,
-        password: hashedPassword || null, // password เป็น null ถ้าเป็น OAuth user
-        isOauth: createCustomerDto.isOauth || false, // กำหนดว่าเป็นผู้ใช้ OAuth หรือไม่
-        oauthType: createCustomerDto.oauthType || null, // เก็บประเภท OAuth เช่น Google
-        oauthUserData: createCustomerDto.oauthUserData || {}, // ข้อมูล OAuth ที่ได้รับ
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
+      const result = await this.prisma.customer.create({
+        data: {
+          username: createCustomerDto.username || null, // username อาจเป็น null หากเป็น OAuth
+          email: createCustomerDto.email, // email ต้องมาจาก OAuth หรือการลงทะเบียนปกติ
+          uid: uid,
+          firstName: createCustomerDto.firstname,
+          lastName: createCustomerDto.lastname || null,
+          password: hashedPassword || null, // password เป็น null ถ้าเป็น OAuth user
+          isOauth: createCustomerDto.isOauth || false, // กำหนดว่าเป็นผู้ใช้ OAuth หรือไม่
+          oauthType: createCustomerDto.oauthType || null, // เก็บประเภท OAuth เช่น Google
+          oauthUserData: createCustomerDto.oauthUserData || {}, // ข้อมูล OAuth ที่ได้รับ
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
 
-    if (!result) {
+      if (!result) {
+        throw new HttpException(
+          'Error while creating customer ',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      return { message: 'Customer created successfully' };
+    } catch (error) {
       throw new HttpException(
         'Error while creating customer ',
         HttpStatus.BAD_REQUEST,
       );
     }
-
-    return { message: 'Customer created successfully' };
   }
   async getCustomerByName(username: string) {
     const result = await this.prisma.customer.findFirst({
@@ -134,4 +152,47 @@ export class CustomerService {
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     return totalRating / reviews.length;
   }
-}
+
+  async getCustomerFavorites(customerUid: string) {
+    try {
+      const favorites = await this.prisma.customerFavorite.findMany({
+        where: {
+          customerUid: customerUid,
+        },
+        include: {
+          post: true, // Includes car details in the result
+        },
+      });
+      return favorites.map((fav) => fav.post);
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async addFavoriteCar(token: string, carpostId: number) {
+    if (!token) {
+      throw new HttpException('Token is required', HttpStatus.UNAUTHORIZED);
+    }
+  
+    const customer = await this.authService.getProfile(token);
+    if (!customer) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    if (!customer) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+  
+    try {
+      await this.prisma.customerFavorite.create({
+        data: {
+          customerUid: customer.uid,
+          postId: Number(carpostId),
+        },
+      });
+      return { message: 'Car successfully added to favorites' };
+    } catch (error) {
+      throw new HttpException('Failed to add car to favorites', HttpStatus.BAD_REQUEST);
+    }
+  }
+  }
+

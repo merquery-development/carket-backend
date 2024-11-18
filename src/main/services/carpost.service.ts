@@ -234,7 +234,7 @@ export class CarPostService {
     const randomCars = carPosts
       .sort(() => Math.random() - 0.5) // สุ่มลำดับทุกครั้งที่เรียกใช้
       .slice(0, amount); // เลือกจำนวนที่กำหนด
-    console.log(randomCars);
+   
   
     // จัดรูปแบบ output
     return randomCars.map((post) => ({
@@ -253,4 +253,17 @@ export class CarPostService {
         `${picture.picturePath}${picture.pictureName}`
       ), // เก็บทุกรูปในรูปแบบ array ของ string path
     }));
-  }}  
+
+    
+  }
+async getCarpostByUid(Uid : string){
+  const result = this.prisma.carPost.findFirst({
+    where  : {
+      uid : Uid
+    }
+  })
+
+  return result
+}
+
+}  

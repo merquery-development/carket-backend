@@ -104,7 +104,7 @@ export class CarService {
     }
   }
 
-  async getCarById(id: string) {
+  async getCarById(id: number) {
     try {
       const result = this.prisma.car.findFirst({
         where: {
@@ -116,6 +116,25 @@ export class CarService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
+
+  async getCategoryByCarId(id: number) {
+    try {
+      const result = await this.prisma.category.findFirst({
+        where: {
+          cars: {
+            some: {
+              id: id
+            }
+          }
+        },
+      });
+      return result;
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+
   async updateBrandLogo(
     brandId: number,
     logoName: string,

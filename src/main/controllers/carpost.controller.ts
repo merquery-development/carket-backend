@@ -185,4 +185,17 @@ export class CarPostController {
   async getBar() {  
     return await this.carPostService.getCarBar();
   }
+
+  @Get('carpost/:postUid')
+  async getCarPostByUid(@Param('postUid') postUid: string) {
+    try {
+      const car = await this.carPostService.getCarPostById(postUid);
+      return car;
+    } catch (error) {
+      throw new HttpException(
+        { message: 'Error deleting car', error: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+}
 }

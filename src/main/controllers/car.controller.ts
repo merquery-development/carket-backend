@@ -221,7 +221,7 @@ export class CarController {
   @Get('car/:carId')
   async getCarbyid(@Param('carId') carId: string) {
     try {
-      const car = await this.carService.getCarById(carId);
+      const car = await this.carService.getCarById(Number(carId));
       return car;
     } catch (error) {
       throw new HttpException(
