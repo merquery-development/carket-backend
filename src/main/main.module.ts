@@ -1,16 +1,17 @@
-import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
+import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AppService } from '../app.service';
 import { PrismaService } from '../prisma.service';
-import { AuthController } from './controllers/auth.controller';
+import { AuthCustomerController } from './controllers/auth/auth-customer.controller';
+import { AuthVendorController } from './controllers/auth/auth-vendor.controller';
+import { AuthController } from './controllers/auth/auth.controller';
 import { CarController } from './controllers/car.controller';
 import { CarPostController } from './controllers/carpost.controller';
 import { CustomerController } from './controllers/customer.controller';
-import { FileUploadController } from './controllers/file.controller';
+import { FileUploadController } from './controllers/file/file.controller';
 import { ReviewController } from './controllers/review.controller';
 import { RoleController } from './controllers/role.controller';
 import { VendorController } from './controllers/vendor.controller';
@@ -27,6 +28,7 @@ import { VendorService } from './services/vendor.service';
 import { CarViewInterceptor } from './utils/carviewIntercep';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
+import { FileVendorUploadController } from './controllers/file/file-vendor.controller';
 @Module({
   imports: [
     PassportModule,
@@ -49,11 +51,14 @@ import { GoogleStrategy } from './utils/strategy/google.strategy';
   ],
   controllers: [
     VendorController,
-    AuthController,
-    CarController,
     CustomerController,
-    FileUploadController,
+    AuthController,
+    AuthVendorController,
+    AuthCustomerController,
     CarPostController,
+    CarController,
+    FileUploadController,
+    FileVendorUploadController,
     RoleController,
     ReviewController,
   ],

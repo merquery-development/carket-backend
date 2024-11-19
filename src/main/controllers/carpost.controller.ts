@@ -85,7 +85,7 @@ export class CarPostController {
         carPostId,
         updateCarPostDto,
       );
-      return { message: 'Car post updated successfully', updatedCarPost };
+      return updatedCarPost;
     } catch (error) {
       throw new HttpException(
         { message: 'Error updating car post', error: error.message },

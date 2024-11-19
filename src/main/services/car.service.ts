@@ -29,6 +29,7 @@ export class CarService {
 
   async createCar(createCarDto: CreateCarDto) {
     try {
+      
       const result = await this.prisma.car.create({
         data: {
           categoryId: createCarDto.categoryId,

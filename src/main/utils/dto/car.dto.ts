@@ -6,7 +6,9 @@ import {
   IsInt,
   IsJSON,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
+  Min,
 } from 'class-validator';
 
 export class CreateCarDto {
@@ -58,79 +60,64 @@ export class UpdateCarDto extends PartialType(CreateCarDto) {}
 
 export class CreateCarPostDto {
   @ApiProperty({
-    example : 1
+    example: 1,
   })
   @IsInt()
+  @Min(0) // Ensures carId is not less than 0
   carId: number;
 
+  @ApiProperty({
+    example: 4,
+  })
   @IsInt()
+  @Min(0) // Ensures vendorId is not less than 0
   vendorId: number;
 
-  @IsDecimal()
+  @ApiProperty({
+    example: 25000.99,
+  })
+  @IsNumber({ allowInfinity: false, allowNaN: false })
+  @Min(0) // Ensures price is not less than 0
   price: number;
 
+  @ApiProperty({
+    example: 2022,
+  })
   @IsInt()
+  @Min(0) // Ensures year is not less than 0
   year: number;
 
+  @ApiProperty({
+    example: 15000,
+  })
   @IsInt()
-  mileage: number; // New field for mileage
+  @Min(0) // Ensures mileage is not less than 0
+  mileage: number;
 
+  @ApiProperty({
+    example: '{"color": "red", "engine": "v6"}',
+  })
   @IsJSON()
   @IsOptional()
   overrideSpecification?: string;
 
+  @ApiProperty({
+    example: false,
+  })
   @IsBoolean()
   isDiscount: boolean;
 
-  @IsInt()
-  viewCount: number;
 
-  @IsDecimal()
+  @ApiProperty({
+    example: 27000.0,
+  })
+  @IsNumber({ allowInfinity: false, allowNaN: false })
   @IsOptional()
+  @Min(0) // Ensures preDiscountPrice is not less than 0
   preDiscountPrice?: number;
 }
 
-export class UpdateCarPostDto {
-  @IsInt()
-  @IsOptional()
-  carId?: number;
-
-  @IsInt()
-  @IsOptional()
-  vendorId?: number;
-
-  @IsDecimal()
-  @IsOptional()
-  price?: number;
-
-  @IsInt()
-  @IsOptional()
-  year?: number;
-
-  @IsInt()
-  @IsOptional()
-  mileage?: number;
-
-  @IsJSON()
-  @IsOptional()
-  overrideSpecification?: string;
-
-  @IsBoolean()
-  @IsOptional()
-  isDiscount?: boolean;
-
-  @IsDecimal()
-  @IsOptional()
-  preDiscountPrice?: number;
-
-  @IsDateString()
-  @IsOptional()
-  deletedAt?: string;
-}
-export class createBrandDto{
-  name
+export class UpdateCarPostDto extends PartialType(CreateCarPostDto){
+ 
 }
 
-export class createCategoryDto{
-
-}

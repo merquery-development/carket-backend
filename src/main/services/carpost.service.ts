@@ -3,25 +3,27 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { getCarsAndStats } from '../utils/car.uti';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
+import { firstPartUid } from '../utils/pagination';
 @Injectable()
 export class CarPostService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
   async createCarPost(createCarPostDto: CreateCarPostDto) {
     // @comment no vendor validation
-    // @comment no price validatation < 0 
-    // @comment no year validation < 0 
+    // @comment no price validatation < 0
+    // @comment no year validation < 0
     // @comment why also create view count ? default should be zero
     try {
+      const uid = firstPartUid();
       const result = await this.prisma.carPost.create({
         data: {
           carId: createCarPostDto.carId,
+          uid : uid,
           vendorId: createCarPostDto.vendorId,
           price: new Prisma.Decimal(createCarPostDto.price),
           year: createCarPostDto.year,
           mileage: createCarPostDto.mileage,
           overrideSpecification: createCarPostDto.overrideSpecification,
           isDiscount: createCarPostDto.isDiscount,
-          viewCount: createCarPostDto.viewCount,
           preDiscountPrice: new Prisma.Decimal(
             createCarPostDto.preDiscountPrice,
           ),
@@ -37,7 +39,7 @@ export class CarPostService {
 
       return result;
     } catch (error) {
-      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -241,8 +243,7 @@ export class CarPostService {
     const randomCars = carPosts
       .sort(() => Math.random() - 0.5) // สุ่มลำดับทุกครั้งที่เรียกใช้
       .slice(0, amount); // เลือกจำนวนที่กำหนด
-   
-  
+
     // จัดรูปแบบ output
     return randomCars.map((post) => ({
       id: post.id,
@@ -256,21 +257,18 @@ export class CarPostService {
       category: post.car?.Category?.name,
       model: post.car?.Model?.name,
       brand: post.car?.Brand?.name,
-      pictures: post.pictures.map((picture) =>
-        `${picture.picturePath}${picture.pictureName}`
+      pictures: post.pictures.map(
+        (picture) => `${picture.picturePath}${picture.pictureName}`,
       ), // เก็บทุกรูปในรูปแบบ array ของ string path
     }));
-
-    
   }
-async getCarpostByUid(Uid : string){
-  const result = this.prisma.carPost.findFirst({
-    where  : {
-      uid : Uid
-    }
-  })
+  async getCarpostByUid(Uid: string) {
+    const result = this.prisma.carPost.findFirst({
+      where: {
+        uid: Uid,
+      },
+    });
 
-  return result
+    return result;
+  }
 }
-
-}  

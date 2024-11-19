@@ -24,7 +24,7 @@ export class VendorController {
   constructor(private readonly vendorService: VendorService) {}
 
   @Post('')
-  @ApiOperation({ summary: 'Create vendor' })
+  @ApiOperation({ summary: 'Register Vendor' })
   @ApiCreatedResponse({
     description: 'The record has been successfully created.',
     type: CreateVendorUserDto,

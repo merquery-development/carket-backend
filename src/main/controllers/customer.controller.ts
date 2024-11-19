@@ -33,7 +33,7 @@ export class CustomerController {
   ) {}
 
   @Post('')
-  @ApiOperation({ summary: 'Create customer' })
+  @ApiOperation({ summary: 'Register Customer' })
   @ApiCreatedResponse({
     description: 'The record has been successfully created.',
     type: CreateCustomerDto,
