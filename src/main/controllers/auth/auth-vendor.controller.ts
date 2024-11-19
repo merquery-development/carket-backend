@@ -1,18 +1,25 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
+  HttpException,
+  HttpStatus,
   Inject,
   Post,
   Query,
+  Req,
   Res,
+  UnauthorizedException,
   forwardRef,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthService } from 'src/main/services/auth.service';
-import { VendorService } from 'src/main/services/vendor.service';
+import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
+import { AuthService } from 'src/main/services/auth.service';
+import { MailerService } from 'src/main/services/mailer.service';
+import { VendorService } from 'src/main/services/vendor.service';
 @ApiTags('auth-vendor')
 @Controller('auth-vendor')
 export class AuthVendorController {
@@ -20,6 +27,8 @@ export class AuthVendorController {
     private readonly authService: AuthService,
     @Inject(forwardRef(() => VendorService))
     private readonly vendorService: VendorService,
+    @Inject(forwardRef(() => MailerService))
+    private readonly mailerService: MailerService,
   ) {}
 
   @Post('login-vendor')
@@ -63,5 +72,75 @@ export class AuthVendorController {
     } catch (error) {
       return res.status(400).send('Invalid or expired token.');
     }
+  }
+
+  @Post('send-verification')
+  @ApiOperation({
+    summary: 'Send email verification link',
+    description:
+      'Sends an email verification link to the specified email address.',
+  })
+  @ApiBody({
+    description: 'The email address to send the verification link to.',
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'array',
+          example: 'user@example.com',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification email sent successfully',
+    schema: {
+      example: {
+        message: 'Verification email sent successfully',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request, email is required',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized, invalid token',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden, token not provided',
+  })
+  async sendVerification(
+    @Body('email') email: string,
+    @Req() request: Request,
+  ) {
+    if (!email) {
+      throw new HttpException('Email is required', HttpStatus.BAD_REQUEST);
+    }
+
+    // ดึง tokenProfile จาก Header Authorization
+    const tokenProfile = request.headers.authorization?.split(' ')[1];
+    if (!tokenProfile) {
+      throw new ForbiddenException('No token provided');
+    }
+
+    // ดึงข้อมูลโปรไฟล์จาก token
+    const profile = await this.authService.getProfile(tokenProfile);
+    if (!profile) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    // สร้าง Email Verification Token
+    const token = await this.authService.generateEmailVerificationToken(
+      profile.uid,
+    );
+
+    // ส่งอีเมล
+    await this.mailerService.sendVerificationEmail(email, token);
+
+    return { message: 'Verification email sent successfully' };
   }
 }

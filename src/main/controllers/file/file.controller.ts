@@ -1,10 +1,8 @@
 import {
   Body,
   Controller,
-  forwardRef,
   HttpException,
   HttpStatus,
-  Inject,
   Post,
   UploadedFiles,
   UseInterceptors,
@@ -18,25 +16,13 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthService } from '../../services/auth.service';
 import { FileUploadService } from '../../services/file.service';
-import {
-  UploadBrandDto,
-  UploadCarPicturesDto,
-  UploadCategoryDto,
-} from '../../utils/dto/car.dto';
-import { UploadVendorBannerDto } from '../../utils/dto/vendor.dto';
+import { UploadBrandDto, UploadCategoryDto } from '../../utils/dto/car.dto';
 @ApiBearerAuth('defaultBearerAuth')
 @ApiTags('upload')
 @Controller('upload')
 export class FileUploadController {
-  constructor(
-    private readonly fileUploadService: FileUploadService,
-    @Inject(forwardRef(() => AuthService))
-    private readonly authService: AuthService,
-  ) {}
-
-  
+  constructor(private readonly fileUploadService: FileUploadService) {}
 
   @Post('category-logo')
   @ApiOperation({ summary: 'Upload normal and active logos for category' })
@@ -139,6 +125,4 @@ export class FileUploadController {
       );
     }
   }
-
-  
 }

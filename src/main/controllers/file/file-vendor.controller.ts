@@ -7,6 +7,7 @@ import {
   Inject,
   Post,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
@@ -18,6 +19,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { EmailVerifiedGuard } from 'src/main/guards/verified.guard';
 import { AuthService } from 'src/main/services/auth.service';
 import { FileUploadService } from 'src/main/services/file.service';
 import { UploadCarPicturesDto } from 'src/main/utils/dto/car.dto';
@@ -29,10 +31,8 @@ import { UploadVendorBannerDto } from 'src/main/utils/dto/vendor.dto';
 export class FileVendorUploadController {
   constructor(
     private readonly fileUploadService: FileUploadService,
-    @Inject(forwardRef(() => AuthService))
-    private readonly authService: AuthService,
   ) {}
-
+  @UseGuards(EmailVerifiedGuard)
   @Post('car-pictures')
   @UseInterceptors(AnyFilesInterceptor())
   @ApiConsumes('multipart/form-data')

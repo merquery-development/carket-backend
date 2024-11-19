@@ -114,8 +114,7 @@ export class VendorService {
           updatedAt: new Date(),
         },
       });
-      const verificationToken =
-        await this.authService.generateEmailVerificationToken(result.uid);
+      const verificationToken = await this.authService.generateEmailVerificationToken(result.uid);
 
       // Send verification email
       await this.mailerService.sendVerificationEmail(

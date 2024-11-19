@@ -3,25 +3,18 @@ import {
   Controller,
   Get,
   HttpCode,
-  Inject,
   Post,
   Req,
   UseGuards,
-  forwardRef,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from 'src/main/services/auth.service';
-import { VendorService } from 'src/main/services/vendor.service';
 
 @ApiTags('auth-customer')
 @Controller('auth-customer')
 export class AuthCustomerController {
-  constructor(
-    private readonly authService: AuthService,
-    @Inject(forwardRef(() => VendorService))
-    private readonly vendorService: VendorService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('login-customer')
   @ApiOperation({ summary: 'Sign in with username or email and password' })
