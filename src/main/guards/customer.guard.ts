@@ -58,7 +58,7 @@ export class CustomerOrGuestGuard implements CanActivate {
 
     if (userRole === 'customer') {
       const customer = await this.customerService
-        .getCustomerByUid(profile.customerUid)
+        .getCustomerByUid(profile.customeruid)
         .catch((error) => {
           throw new UnauthorizedException('Authguard error', error.message);
         });
@@ -79,9 +79,9 @@ export class CustomerOrGuestGuard implements CanActivate {
   private async determineUserRole(
     profile: any,
   ): Promise<'vendorUser' | 'customer' | 'guest' | null> {
-    if (profile.vendorUid) {
+    if (profile.vendoruid) {
       return 'vendorUser';
-    } else if (profile.customerUid) {
+    } else if (profile.customeruid) {
       return 'customer';
     } else {
       return null; // Role not recognized

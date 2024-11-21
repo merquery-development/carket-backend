@@ -29,6 +29,7 @@ import { CarViewInterceptor } from './utils/carviewIntercep';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
 import { FileVendorUploadController } from './controllers/file/file-vendor.controller';
+import { EmailVerifiedGuard } from './guards/verified.guard';
 @Module({
   imports: [
     PassportModule,
@@ -82,6 +83,7 @@ import { FileVendorUploadController } from './controllers/file/file-vendor.contr
     CustomerOrGuestGuard,
     RoleService,
     CarPostGuard,
+    EmailVerifiedGuard,
   ],
 })
 export class MainModule {}

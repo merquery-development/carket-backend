@@ -13,6 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
@@ -24,17 +25,19 @@ import {
 
 import { CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CustomerOrGuestGuard } from '../guards/customer.guard';
+import { EmailVerifiedGuard } from '../guards/verified.guard';
 import { CarPostService } from '../services/carpost.service';
 import { CarViewInterceptor } from '../utils/carviewIntercep';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 
 @ApiTags('carposts')
 @Controller('carposts')
-// @ApiBearerAuth('defaultBearerAuth')
+@ApiBearerAuth('defaultBearerAuth')
 // @UseGuards(CarPostGuard)
 export class CarPostController {
   constructor(private readonly carPostService: CarPostService) {}
 
+  @UseGuards(EmailVerifiedGuard)
   @Post('')
   @ApiOperation({ summary: 'Create car post' })
   @ApiCreatedResponse({
@@ -45,35 +48,36 @@ export class CarPostController {
     return this.carPostService.createCarPost(postData);
   }
 
-    //change to carpost
-    @Get('recommended')
-    @ApiOperation({ summary: 'Get recommended cars' }) // แสดงรายละเอียดของ API
-    @ApiQuery({
-      name: 'amount',
-      required: true,
-      type: Number,
-      description: 'Number of cars to recommend',
-    })
-    async getRecommendedCars(
-      @Query('amount') amount: number, // รับจำนวนที่ต้องการแนะนำจาก query
-    ) {
-      if (!amount || amount <= 0) {
-        throw new HttpException(
-          'Amount must be greater than 0',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-  
-      try {
-        const recommendedCars = await this.carPostService.getRecommendedCars(amount);
-        return recommendedCars;
-      } catch (error) {
-        throw new HttpException(
-          { message: 'Error fetching recommended cars', error: error.message },
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
+  //change to carpost
+  @Get('recommended')
+  @ApiOperation({ summary: 'Get recommended cars' }) // แสดงรายละเอียดของ API
+  @ApiQuery({
+    name: 'amount',
+    required: true,
+    type: Number,
+    description: 'Number of cars to recommend',
+  })
+  async getRecommendedCars(
+    @Query('amount') amount: number, // รับจำนวนที่ต้องการแนะนำจาก query
+  ) {
+    if (!amount || amount <= 0) {
+      throw new HttpException(
+        'Amount must be greater than 0',
+        HttpStatus.BAD_REQUEST,
+      );
     }
+
+    try {
+      const recommendedCars =
+        await this.carPostService.getRecommendedCars(amount);
+      return recommendedCars;
+    } catch (error) {
+      throw new HttpException(
+        { message: 'Error fetching recommended cars', error: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
   @Put(':carPostId')
   @ApiOperation({ summary: 'Update car post by ID' })
   async updateCarPost(
@@ -176,13 +180,13 @@ export class CarPostController {
     }
   }
   @CacheKey('custom_key')
-  @CacheTTL(24*60*60 * 1000) //millisecond
+  @CacheTTL(24 * 60 * 60 * 1000) //millisecond
   @Get('bar')
   @ApiResponse({
     status: 200,
     description: 'Returns an array of car counts per price range',
   })
-  async getBar() {  
+  async getBar() {
     return await this.carPostService.getCarBar();
   }
 
@@ -197,5 +201,5 @@ export class CarPostController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-}
+  }
 }

@@ -198,6 +198,8 @@ export class VendorService {
     return result;
   }
   async verifyEmail(uuid: string) {
+    console.log(uuid);
+    
     const user = await this.prisma.vendorUser.update({
       where: {
         uid: uuid,

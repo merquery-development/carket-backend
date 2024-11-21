@@ -26,12 +26,12 @@ export class AuthCustomerController {
       properties: {
         identifier: {
           type: 'String',
-          example: 'admin',
+          example: 'testuser',
           description: 'this is username',
         },
         password: {
           type: 'String',
-          example: 'adminx',
+          example: 'testpassword',
           description: 'this is password',
         },
       },

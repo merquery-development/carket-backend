@@ -16,7 +16,7 @@ export class MailerService {
   }
 
   async sendVerificationEmail(email: string, token: string) {
-    const verificationUrl = `http://localhost:3000/auth/verify-email?token=${token}`;
+    const verificationUrl = `http://localhost:3000/auth-vendor/verify-email?token=${token}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,

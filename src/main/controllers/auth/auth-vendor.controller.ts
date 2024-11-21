@@ -14,7 +14,14 @@ import {
   UnauthorizedException,
   forwardRef,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { log } from 'console';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { AuthService } from 'src/main/services/auth.service';
@@ -41,12 +48,12 @@ export class AuthVendorController {
       properties: {
         identifier: {
           type: 'String',
-          example: 'admin',
+          example: 'testuser',
           description: 'this is username',
         },
         password: {
           type: 'String',
-          example: 'adminx',
+          example: 'testpassword',
           description: 'this is password',
         },
       },
@@ -63,13 +70,18 @@ export class AuthVendorController {
   async verifyEmail(@Query('token') token: string, @Res() res) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const userId = decoded['userId'];
 
+      
+      const userId = decoded['uid'];
+    
+      
       // Activate user account
       await this.vendorService.verifyEmail(userId);
 
       return res.send('Email successfully verified!');
     } catch (error) {
+      console.log(error.message);
+      
       return res.status(400).send('Invalid or expired token.');
     }
   }
@@ -113,6 +125,7 @@ export class AuthVendorController {
     status: 403,
     description: 'Forbidden, token not provided',
   })
+  @ApiBearerAuth('defaultBearerAuth')
   async sendVerification(
     @Body('email') email: string,
     @Req() request: Request,
@@ -135,10 +148,10 @@ export class AuthVendorController {
 
     // สร้าง Email Verification Token
     const token = await this.authService.generateEmailVerificationToken(
-      profile.uid,
+      profile.vendoruid,
     );
-
-    // ส่งอีเมล
+ 
+    // // ส่งอีเมล
     await this.mailerService.sendVerificationEmail(email, token);
 
     return { message: 'Verification email sent successfully' };

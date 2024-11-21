@@ -22,7 +22,8 @@ export class AuthService {
     private readonly customerService: CustomerService,
   ) {}
   async generateEmailVerificationToken(userId: string) {
-    const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+    const payload = {uid : userId}
+    const token = jwt.sign( payload , process.env.JWT_SECRET, {
       expiresIn: '1d', // token expires in 1 day
     });
     return token;
@@ -64,9 +65,10 @@ export class AuthService {
 
     await this.vendorService.updateLastLogin(vendor.uid);
     const payload = {
-      vendorUid: vendor.uid,
+      vendoruid: vendor.uid,
       username: vendor.username,
       email: vendor.email,
+      verified : vendor.isEmailVerified
     };
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.ACCESS_TOKEN_SECRET,
@@ -119,7 +121,7 @@ export class AuthService {
     
     await this.customerService.updateLastLoginCustomer(customer.uid);
     const payload = {
-      customerUid: customer.uid,
+      customeruid: customer.uid,
       username: customer.username,
       email: customer.email,
     };
@@ -142,21 +144,26 @@ export class AuthService {
       const decoded = await this.jwtService.verifyAsync(refreshToken, {
         secret: process.env.REFRESH_TOKEN_SECRET,
       });
-
+  
+      
       // ตรวจสอบว่า Refresh Token ถูกต้อง
       const vendor = await this.vendorService.getVendorByuid(decoded.uid);
+    
+      
       if (!vendor) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
       // ตรวจสอบเวลาที่ล็อกอินล่าสุด
       const now = new Date();
-
+   
+      
       const lastLogin = new Date(vendor.lastLogin);
-
+  
       // ตรวจสอบว่าการล็อกอินล่าสุดอยู่ในช่วงเวลาที่ Refresh Token ถูกต้อง
       const tokenValidPeriod = 24 * 60 * 60 * 1000; // 24 ชั่วโมง
 
+     
       if (now.getTime() - lastLogin.getTime() > tokenValidPeriod) {
         //เวลาตอนนี้-เวลาล็อคอินมากกว่า 24 มั้ย
         throw new HttpException(
@@ -178,7 +185,7 @@ export class AuthService {
       };
     } catch (error) {
       throw new HttpException(
-        "Invalid refresh token'",
+       error.message,
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -189,6 +196,7 @@ export class AuthService {
       const decoded = await this.jwtService.verifyAsync(token, {
         secret: process.env.ACCESS_TOKEN_SECRET,
       });
+     
      
       
       return decoded;
