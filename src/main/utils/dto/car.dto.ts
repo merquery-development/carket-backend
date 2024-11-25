@@ -1,8 +1,6 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import {
   IsBoolean,
-  IsDateString,
-  IsDecimal,
   IsInt,
   IsJSON,
   IsNotEmpty,
@@ -107,7 +105,6 @@ export class CreateCarPostDto {
   @IsBoolean()
   isDiscount: boolean;
 
-
   @ApiProperty({
     example: 27000.0,
   })
@@ -117,7 +114,58 @@ export class CreateCarPostDto {
   preDiscountPrice?: number;
 }
 
-export class UpdateCarPostDto extends PartialType(CreateCarPostDto){
- 
-}
+export class UpdateCarPostDto extends PartialType(CreateCarPostDto) {}
 
+export class CreateCarpostPicDto {
+  @ApiProperty({
+    example: 1,
+  })
+
+  carId: number;
+
+  @ApiProperty({
+    example: 4,
+  })
+
+  vendorId: number;
+
+  @ApiProperty({
+    example: 25000.99,
+  })
+
+  price: number;
+
+  @ApiProperty({
+    example: 2022,
+  })
+ 
+  year: number;
+
+  @ApiProperty({
+    example: 15000,
+  })
+  
+  mileage: number;
+
+  @ApiProperty({
+    example: '{"color": "red", "engine": "v6"}',
+  })
+ 
+  @IsOptional()
+  overrideSpecification?: string;
+
+  @ApiProperty({
+    example: false,
+  })
+ 
+
+  @ApiProperty({
+    example: 27000.0,
+  })
+
+  @IsOptional()
+  // @Min(0) // Ensures preDiscountPrice is not less than 0
+  preDiscountPrice?: number;
+
+
+}

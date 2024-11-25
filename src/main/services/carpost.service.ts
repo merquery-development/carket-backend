@@ -14,10 +14,12 @@ export class CarPostService {
     // @comment why also create view count ? default should be zero
     try {
       const uid = firstPartUid();
+      // console.log(createCarPostDto[1]);
+      
       const result = await this.prisma.carPost.create({
         data: {
           carId: createCarPostDto.carId,
-          uid : uid,
+          uid: uid,
           vendorId: createCarPostDto.vendorId,
           price: new Prisma.Decimal(createCarPostDto.price),
           year: createCarPostDto.year,
@@ -123,7 +125,7 @@ export class CarPostService {
       category: item.car?.Category?.name || null, // Extract category name
       brand: item.car?.Brand?.name || null, // Extract brand name
     }));
-    return result
+    return result;
   }
   async getCarPostById(id: string) {
     try {
