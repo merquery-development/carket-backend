@@ -91,7 +91,7 @@ export class CarPostService {
   }
 
   async getCarPosts(params) {
-    return await getCarsAndStats({
+    const result = await getCarsAndStats({
       prismaModel: this.prisma.carPost, // Use CarPost model
       customSelect: {
         id: true,
@@ -116,6 +116,14 @@ export class CarPostService {
       },
       ...params, // Pass other params dynamically
     });
+    result.items = result.items.map((item) => ({
+      id: item.id,
+      basePrice: item.price,
+      year: item.year,
+      category: item.car?.Category?.name || null, // Extract category name
+      brand: item.car?.Brand?.name || null, // Extract brand name
+    }));
+    return result
   }
   async getCarPostById(id: string) {
     try {

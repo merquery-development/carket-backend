@@ -1,9 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import {
   IsEmail,
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsPhoneNumber,
   IsString,
 } from 'class-validator';
 export class CreateVendorUserDto {
@@ -62,4 +63,34 @@ export class CreateVendorUserDto {
 export class UploadVendorBannerDto {
   @IsNotEmpty()
   vendorId: string;
+}
+
+export class CreateVendorDto {
+  @IsString()
+  @ApiProperty({
+    example: 'testvendor',
+  })
+  name: string;
+
+  @IsEmail()
+  @ApiProperty({
+    example: 'testemal@email.com',
+  })
+  email: string;
+
+  @IsPhoneNumber()
+  @ApiProperty({
+    example: '01234578',
+  })
+  phone: string;
+
+  @IsString()
+  @ApiProperty({
+    example: '123/456 midtown',
+  })
+  address: string;
+}
+
+export class UpdateVendorDto extends PartialType(CreateVendorDto){
+
 }

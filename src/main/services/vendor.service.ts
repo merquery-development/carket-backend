@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
-import { CreateVendorUserDto } from '../utils/dto/vendor.dto';
+import { CreateVendorDto, CreateVendorUserDto, UpdateVendorDto } from '../utils/dto/vendor.dto';
 import { firstPartUid, getPagination } from '../utils/pagination';
 import { AuthService } from './auth.service';
 import { MailerService } from './mailer.service';
@@ -114,7 +114,8 @@ export class VendorService {
           updatedAt: new Date(),
         },
       });
-      const verificationToken = await this.authService.generateEmailVerificationToken(result.uid);
+      const verificationToken =
+        await this.authService.generateEmailVerificationToken(result.uid);
 
       // Send verification email
       await this.mailerService.sendVerificationEmail(
@@ -172,25 +173,25 @@ export class VendorService {
       where: {
         uid: uid,
       },
-      select : {
+      select: {
         id: true,
-        uid : true,
-        vendorId :true,
-        username : true,
-        email : true,
-        isEmailVerified : true,
-        mobileNumber : true,
-        lastLogin : true,
-        nickName : true,
-        firstName : true,
-        lastName : true,
-        profilePicturePath : true,
-        profilePictureName : true,
-        isEnable : true,
-        roleId : true,
-        createdAt :true,
-        updatedAt : true
-      }
+        uid: true,
+        vendorId: true,
+        username: true,
+        email: true,
+        isEmailVerified: true,
+        mobileNumber: true,
+        lastLogin: true,
+        nickName: true,
+        firstName: true,
+        lastName: true,
+        profilePicturePath: true,
+        profilePictureName: true,
+        isEnable: true,
+        roleId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
     if (!result) {
       throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);
@@ -198,8 +199,6 @@ export class VendorService {
     return result;
   }
   async verifyEmail(uuid: string) {
-    console.log(uuid);
-    
     const user = await this.prisma.vendorUser.update({
       where: {
         uid: uuid,
@@ -215,7 +214,7 @@ export class VendorService {
     return { message: 'update successfull' };
   }
 
-  async getRoleByVendorUid(uuid: string, roleName: string) {
+  async getVendorByRoleUid(uuid: string, roleName: string) {
     const user = await this.prisma.vendorUser.findFirst({
       where: {
         uid: uuid,
@@ -238,5 +237,35 @@ export class VendorService {
         imagePath: '/' + picturePath,
       },
     });
+  }
+
+  async createVendor(createVendor : CreateVendorDto){
+      try {
+        await this.prisma.vendor.create({
+          data : {
+            ...createVendor
+          }
+        })
+      } catch (error) {
+        return error
+      }
+  }
+  async updateVendor(id: number, updateVendorDto: UpdateVendorDto) {
+    try {
+       await this.prisma.vendor.update({
+      where: {
+        id: id,
+      },
+      data: {
+        ...updateVendorDto,
+      },
+    
+    });
+    } catch (error) {
+      return error
+    }
+   
+
+  
   }
 }

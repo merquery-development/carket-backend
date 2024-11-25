@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -37,7 +38,7 @@ import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 export class CarPostController {
   constructor(private readonly carPostService: CarPostService) {}
 
-  @UseGuards(EmailVerifiedGuard)
+  @UseGuards(EmailVerifiedGuard) //ต้องยืนยันเมลก่อน
   @Post('')
   @ApiOperation({ summary: 'Create car post' })
   @ApiCreatedResponse({
@@ -48,7 +49,6 @@ export class CarPostController {
     return this.carPostService.createCarPost(postData);
   }
 
-  //change to carpost
   @Get('recommended')
   @ApiOperation({ summary: 'Get recommended cars' }) // แสดงรายละเอียดของ API
   @ApiQuery({
@@ -97,7 +97,7 @@ export class CarPostController {
       );
     }
   }
-  @UseInterceptors(CarViewInterceptor) // เพิ่ม Interceptor ที่นี่
+  @UseInterceptors(CarViewInterceptor)
   @Get('carpost/:carPostId')
   @ApiOperation({ summary: 'Get specific car post by ID' })
   @ApiOkResponse({
@@ -131,7 +131,6 @@ export class CarPostController {
   @ApiQuery({ name: 'mileageMax', required: false, type: String })
   @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
-  @UseGuards(CustomerOrGuestGuard)
   async getCarPosts(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
@@ -167,11 +166,15 @@ export class CarPostController {
   }
 
   @Delete('delete/:carId')
+  @UseGuards(CustomerOrGuestGuard) // identify user is customer,vendor or guest
   @ApiOperation({ summary: 'Soft delete car by ID' })
-  async deleteSoftCar(@Param('carId') carId: string) {
+  async deleteSoftCar(@Req() request, @Param('carId') carId: string) {
     try {
-      const deletedCar = await this.carPostService.deleteSoftCarPost(carId);
-      return { message: 'Car deleted successfully', deletedCar };
+    const role = request['role']
+    console.log(role);
+    
+      // const deletedCar = await this.carPostService.deleteSoftCarPost(carId);
+      // return { message: 'Car deleted successfully', deletedCar };
     } catch (error) {
       throw new HttpException(
         { message: 'Error deleting car', error: error.message },

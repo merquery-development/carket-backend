@@ -8,7 +8,7 @@ export class CarService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getCars(params) {
-    return await getCarsAndStats({
+    const result = await getCarsAndStats({
       prismaModel: this.prisma.car,
       customSelect: {
         id: true,
@@ -24,6 +24,17 @@ export class CarService {
       },
       ...params,
     });
+
+      result.items = result.items.map((item) => ({
+      id: item.id,
+      basePrice: item.basePrice,
+      year: item.year,
+      category: item.Category?.name || null, // Extract category name
+      brand: item.Brand?.name || null, // Extract brand name
+
+      
+    }));
+    return result
   }
   
 

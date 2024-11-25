@@ -13,7 +13,7 @@ import { AuthService } from '../services/auth.service';
 import { VendorService } from '../services/vendor.service';
 
 @Injectable()
-export class CarPostGuard implements CanActivate {
+export class AdminGuard implements CanActivate {
   constructor(
     private readonly authService: AuthService,
     private readonly vendorService: VendorService,
@@ -41,7 +41,7 @@ export class CarPostGuard implements CanActivate {
       }
 
       // Check if the vendor's role is admin
-      const vendor = await this.vendorService.getRoleByVendorUid(
+      const vendor = await this.vendorService.getVendorByRoleUid(
         profile.uid,
         'admin',
       );

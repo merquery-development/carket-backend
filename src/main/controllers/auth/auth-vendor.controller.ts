@@ -80,7 +80,7 @@ export class AuthVendorController {
 
       return res.send('Email successfully verified!');
     } catch (error) {
-      console.log(error.message);
+      
       
       return res.status(400).send('Invalid or expired token.');
     }

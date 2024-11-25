@@ -11,12 +11,14 @@ import { AuthController } from './controllers/auth/auth.controller';
 import { CarController } from './controllers/car.controller';
 import { CarPostController } from './controllers/carpost.controller';
 import { CustomerController } from './controllers/customer.controller';
+import { FileVendorUploadController } from './controllers/file/file-vendor.controller';
 import { FileUploadController } from './controllers/file/file.controller';
 import { ReviewController } from './controllers/review.controller';
 import { RoleController } from './controllers/role.controller';
 import { VendorController } from './controllers/vendor.controller';
-import { CarPostGuard } from './guards/carpost.guard';
+import { AdminGuard } from './guards/admin.guard';
 import { CustomerOrGuestGuard } from './guards/customer.guard';
+import { EmailVerifiedGuard } from './guards/verified.guard';
 import { AuthService } from './services/auth.service';
 import { CarService } from './services/car.service';
 import { CarPostService } from './services/carpost.service';
@@ -28,8 +30,6 @@ import { VendorService } from './services/vendor.service';
 import { CarViewInterceptor } from './utils/carviewIntercep';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
-import { FileVendorUploadController } from './controllers/file/file-vendor.controller';
-import { EmailVerifiedGuard } from './guards/verified.guard';
 @Module({
   imports: [
     PassportModule,
@@ -82,7 +82,7 @@ import { EmailVerifiedGuard } from './guards/verified.guard';
     CarViewInterceptor,
     CustomerOrGuestGuard,
     RoleService,
-    CarPostGuard,
+    AdminGuard,
     EmailVerifiedGuard,
   ],
 })
