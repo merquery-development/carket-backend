@@ -14,6 +14,8 @@ import {
   UploadedFiles,
   UseGuards,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import {
@@ -69,15 +71,17 @@ export class CarPostController {
     schema: {
       type: 'object',
       properties: {
-       
         carId: { type: 'integer', example: 1 }, // Include carId field in form-data
-        vendorId: { type: 'integer' , example: 4},
-        price: { type: 'integer',  example: 25000.99 },
-        year: { type: 'integer',    example: 2022},
+        vendorId: { type: 'integer', example: 4 },
+        price: { type: 'integer', example: 25000.99 },
+        year: { type: 'integer', example: 2022 },
         mileage: { type: 'integer', example: 15000 },
         isDiscount: { type: 'boolean', example: true },
-        preDiscountPrice: { type: 'integer' , example: 27000.0},
-        overrideSpecification: { type: 'string', example: '{"color": "red", "engine": "v6"}'},
+        preDiscountPrice: { type: 'integer', example: 27000.0 },
+        overrideSpecification: {
+          type: 'string',
+          example: '{"color": "red", "engine": "v6"}',
+        },
         filename: {
           type: 'array',
           items: { type: 'string', format: 'binary' },
@@ -86,6 +90,7 @@ export class CarPostController {
     },
   })
   @UseInterceptors(AnyFilesInterceptor())
+
   async createCarPostWithPictures(
     @Body() createCarpostPic: CreateCarpostPicDto,
     @UploadedFiles() files: Array<Express.Multer.File>,
@@ -98,10 +103,7 @@ export class CarPostController {
     postData.mileage = Number(postData.mileage);
     postData.isDiscount = Boolean(postData.isDiscount);
 
-  
-    
     try {
-
       // Step 1: Create car post
       const carPost = await this.carPostService.createCarPost(postData);
 

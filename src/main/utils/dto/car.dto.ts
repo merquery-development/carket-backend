@@ -8,6 +8,7 @@ import {
   IsOptional,
   Min,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateCarDto {
   @ApiProperty({
@@ -117,55 +118,42 @@ export class CreateCarPostDto {
 export class UpdateCarPostDto extends PartialType(CreateCarPostDto) {}
 
 export class CreateCarpostPicDto {
-  @ApiProperty({
-    example: 1,
-  })
-
+  @IsInt()
+  @Min(1)
+  @Transform(({ value }) => Number(value), { toClassOnly: true }) // Correct usage of Transform
   carId: number;
 
-  @ApiProperty({
-    example: 4,
-  })
-
+  @IsInt()
+  @Min(1)
+  @Transform(({ value }) => Number(value), { toClassOnly: true }) // Correct usage of Transform
   vendorId: number;
 
-  @ApiProperty({
-    example: 25000.99,
-  })
-
+  @IsNumber()
+  @Min(0)
+  @Transform(({ value }) => Number(value), { toClassOnly: true }) // Correct usage of Transform
   price: number;
 
-  @ApiProperty({
-    example: 2022,
-  })
- 
+  @IsInt()
+  @Min(1900) // ตรวจสอบว่า year ต้องไม่น้อยกว่า 1900
+  @Transform(({ value }) => Number(value), { toClassOnly: true }) // Correct usage of Transform
   year: number;
 
-  @ApiProperty({
-    example: 15000,
-  })
-  
+  @IsInt()
+  @Min(0)
+  @Transform(({ value }) => Number(value), { toClassOnly: true }) // Correct usage of Transform
   mileage: number;
 
-  @ApiProperty({
-    example: '{"color": "red", "engine": "v6"}',
-  })
- 
+  @IsJSON()
   @IsOptional()
   overrideSpecification?: string;
 
-  @ApiProperty({
-    example: false,
-  })
- 
-
-  @ApiProperty({
-    example: 27000.0,
-  })
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true', { toClassOnly: true }) // Correct usage of Transform for boolean
+  isDiscount: boolean;
 
   @IsOptional()
-  // @Min(0) // Ensures preDiscountPrice is not less than 0
+  @IsNumber()
+  @Min(0)
+  @Transform(({ value }) => Number(value), { toClassOnly: true }) // Correct usage of Transform for preDiscountPrices
   preDiscountPrice?: number;
-
-
 }
