@@ -90,8 +90,7 @@ export class CarPostController {
     },
   })
   @UseInterceptors(AnyFilesInterceptor())
-
-  async createCarPostWithPictures(
+async createCarPostWithPictures(
     @Body() createCarpostPic: CreateCarpostPicDto,
     @UploadedFiles() files: Array<Express.Multer.File>,
   ) {
@@ -135,6 +134,35 @@ export class CarPostController {
     }
   }
 
+  @Get('recommended')
+  @ApiOperation({ summary: 'Get recommended cars' }) // แสดงรายละเอียดของ API
+  @ApiQuery({
+    name: 'amount',
+    required: true,
+    type: Number,
+    description: 'Number of cars to recommend',
+  })
+  async getRecommendedCars(
+    @Query('amount') amount: number, // รับจำนวนที่ต้องการแนะนำจาก query
+  ) {
+    if (!amount || amount <= 0) {
+      throw new HttpException(
+        'Amount must be greater than 0',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      const recommendedCars =
+        await this.carPostService.getRecommendedCars(amount);
+      return recommendedCars;
+    } catch (error) {
+      throw new HttpException(
+        { message: 'Error fetching recommended cars', error: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
   @Put(':carPostId')
   @ApiOperation({ summary: 'Update car post by ID' })
   async updateCarPost(
