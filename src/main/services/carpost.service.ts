@@ -125,8 +125,7 @@ export class CarPostService {
       },
       ...params, // Pass other params dynamically
     });
-
-   
+ 
     
     result.items = result.items.map((item) => ({
       id: item.id,
@@ -261,6 +260,7 @@ export class CarPostService {
         },
       },
     });
+console.log(carPosts[0].price);
 
     // สุ่มและเลือกจำนวนรถที่ต้องการ
     const randomCars = carPosts
@@ -272,7 +272,7 @@ export class CarPostService {
       id: post.id,
       year: post.year,
       mileage: post.mileage,
-      price: post.price,
+      price: Number(post.price),
       vendor: {
         address: post.vendor.address,
         name: post.vendor.name,
