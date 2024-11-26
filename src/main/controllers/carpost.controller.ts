@@ -1,21 +1,24 @@
 import { CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
+  forwardRef,
   Get,
   HttpException,
   HttpStatus,
+  Inject,
+  NotFoundException,
   Param,
   Post,
   Put,
   Query,
   Req,
+  UnauthorizedException,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import {
@@ -30,19 +33,25 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CustomerOrGuestGuard } from '../guards/customer.guard';
+import { AuthService } from '../services/auth.service';
 import { CarPostService } from '../services/carpost.service';
 import { FileUploadService } from '../services/file.service';
+import { VendorService } from '../services/vendor.service';
 import { CarViewInterceptor } from '../utils/carviewIntercep';
 import { CreateCarpostPicDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 
 @ApiTags('carposts')
 @Controller('carposts')
 @ApiBearerAuth('defaultBearerAuth')
-// @UseGuards(CarPostGuard)
 export class CarPostController {
   constructor(
     private readonly carPostService: CarPostService,
+    @Inject(forwardRef(() => FileUploadService))
     private readonly fileService: FileUploadService,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
+    @Inject(forwardRef(() => VendorService))
+    private readonly vendorService: VendorService,
   ) {}
 
   // @UseGuards(EmailVerifiedGuard) // Requires email verification
@@ -90,9 +99,10 @@ export class CarPostController {
     },
   })
   @UseInterceptors(AnyFilesInterceptor())
-async createCarPostWithPictures(
+  async createCarPostWithPictures(
     @Body() createCarpostPic: CreateCarpostPicDto,
     @UploadedFiles() files: Array<Express.Multer.File>,
+    @Req() request: Request,
   ) {
     let postData = JSON.parse(JSON.stringify(createCarpostPic));
     postData.carId = Number(postData.carId);
@@ -101,10 +111,33 @@ async createCarPostWithPictures(
     postData.year = Number(postData.year);
     postData.mileage = Number(postData.mileage);
     postData.isDiscount = Boolean(postData.isDiscount);
+    // ตรวจสอบว่า header `authorization` มีอยู่หรือไม่
+    const token = request.headers['authorization']?.split(' ')[1];
+    if (!token) {
+      throw new BadRequestException('Authorization token is missing');
+    }
+
+    // ดึงข้อมูลโปรไฟล์จาก token
+    const profile = await this.authService.getProfile(token);
+    if (!profile || !profile.vendorUid) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    // ดึงข้อมูล vendor จาก vendorUid
+    const vendorUser = await this.vendorService.getVendorUserByuid(
+      profile.vendorUid,
+    );
+    if (!vendorUser) {
+      throw new NotFoundException('Vendor not found');
+    }
 
     try {
       // Step 1: Create car post
-      const carPost = await this.carPostService.createCarPost(postData);
+      //สร้างได้เฉพาะ vendor ตัวเอง
+      const carPost = await this.carPostService.createCarPost(
+        vendorUser.vendorId,
+        postData,
+      );
 
       if (!carPost) {
         throw new HttpException(

@@ -21,7 +21,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { log } from 'console';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { AuthService } from 'src/main/services/auth.service';
@@ -71,18 +70,14 @@ export class AuthVendorController {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      
       const userId = decoded['uid'];
-    
-      
+
       // Activate user account
       await this.vendorService.verifyEmail(userId);
 
-      return res.send('Email successfully verified!');
+      return { message: 'Email successfully verified!' };
     } catch (error) {
-      
-      
-      return res.status(400).send('Invalid or expired token.');
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -130,30 +125,34 @@ export class AuthVendorController {
     @Body('email') email: string,
     @Req() request: Request,
   ) {
-    if (!email) {
-      throw new HttpException('Email is required', HttpStatus.BAD_REQUEST);
+    try {
+      if (!email) {
+        throw new HttpException('Email is required', HttpStatus.BAD_REQUEST);
+      }
+
+      // ดึง tokenProfile จาก Header Authorization
+      const tokenProfile = request.headers.authorization?.split(' ')[1];
+      if (!tokenProfile) {
+        throw new ForbiddenException('No token provided');
+      }
+
+      // ดึงข้อมูลโปรไฟล์จาก token
+      const profile = await this.authService.getProfile(tokenProfile);
+      if (!profile) {
+        throw new UnauthorizedException('Invalid token');
+      }
+
+      // สร้าง Email Verification Token
+      const token = await this.authService.generateEmailVerificationToken(
+        profile.vendoruid,
+      );
+
+      // // ส่งอีเมล
+      await this.mailerService.sendVerificationEmail(email, token);
+
+      return { message: 'Verification email sent successfully' };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
-
-    // ดึง tokenProfile จาก Header Authorization
-    const tokenProfile = request.headers.authorization?.split(' ')[1];
-    if (!tokenProfile) {
-      throw new ForbiddenException('No token provided');
-    }
-
-    // ดึงข้อมูลโปรไฟล์จาก token
-    const profile = await this.authService.getProfile(tokenProfile);
-    if (!profile) {
-      throw new UnauthorizedException('Invalid token');
-    }
-
-    // สร้าง Email Verification Token
-    const token = await this.authService.generateEmailVerificationToken(
-      profile.vendoruid,
-    );
- 
-    // // ส่งอีเมล
-    await this.mailerService.sendVerificationEmail(email, token);
-
-    return { message: 'Verification email sent successfully' };
   }
 }

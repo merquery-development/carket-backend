@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   forwardRef,
   HttpException,
   HttpStatus,
@@ -7,7 +8,11 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
-import { CreateVendorDto, CreateVendorUserDto, UpdateVendorDto } from '../utils/dto/vendor.dto';
+import {
+  CreateVendorDto,
+  CreateVendorUserDto,
+  UpdateVendorDto,
+} from '../utils/dto/vendor.dto';
 import { firstPartUid, getPagination } from '../utils/pagination';
 import { AuthService } from './auth.service';
 import { MailerService } from './mailer.service';
@@ -38,6 +43,18 @@ export class VendorService {
     sortBy?: string; // Field to sort by
     sortOrder?: 'asc' | 'desc'; // Sort direction
   }) {
+    if (page !== null && (page <= 0 || !Number.isInteger(page))) {
+      throw new BadRequestException(
+        'Page must be a positive integer greater than 0',
+      );
+    }
+
+    if (pageSize !== null && (pageSize <= 0 || !Number.isInteger(pageSize))) {
+      throw new BadRequestException(
+        'PageSize must be a positive integer greater than 0',
+      );
+    }
+
     const { skip, take } = getPagination(page, pageSize);
     const where = {
       users: {
@@ -84,28 +101,43 @@ export class VendorService {
   }
   async createVendorUser(createVendorUser: CreateVendorUserDto) {
     try {
-      let hashedPassword;
-      const existVendorUsername = await this.getVendorByName(
-        createVendorUser.username,
-      );
-      const existVendorEmail = await this.getVendorByEmail(
-        createVendorUser.email,
-      );
-      if (existVendorUsername || existVendorEmail) {
-        throw new HttpException('User already exist', HttpStatus.BAD_REQUEST);
+      // ตรวจสอบว่าต้องมี username หรือ email อย่างใดอย่างหนึ่ง
+      if (!createVendorUser.username && !createVendorUser.email) {
+        throw new BadRequestException('Either username or email is required');
       }
+
+      let hashedPassword: string | null = null;
+      let existVendorUsername = null;
+      let existVendorEmail = null;
+
+      // ตรวจสอบ username และ email ซ้ำซ้อน
+      if (createVendorUser.username) {
+        existVendorUsername = await this.getVendorByName(
+          createVendorUser.username,
+        );
+      }
+      if (createVendorUser.email) {
+        existVendorEmail = await this.getVendorByEmail(createVendorUser.email);
+      }
+
+      if (existVendorUsername || existVendorEmail) {
+        throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
+      }
+
       const uid = firstPartUid();
-      // ตรวจสอบว่ามี password หรือไม่ ถ้ามีก็ทำการ hash
+
+      // ตรวจสอบและ hash password (ถ้ามี)
       if (createVendorUser.password) {
         hashedPassword = await this.hashPassword(createVendorUser.password);
       }
 
+      // สร้าง Vendor User
       const result = await this.prisma.vendorUser.create({
         data: {
-          vendorId: createVendorUser.vendorId, // vendorId จะเป็น null หากมาจาก OAuth
+          vendorId: createVendorUser.vendorId || null, // vendorId อาจเป็น null
           uid: uid,
-          username: createVendorUser.username || null, // username อาจเป็น null หากเป็น OAuth
-          email: createVendorUser.email, // email ต้องมาจาก OAuth หรือการลงทะเบียนปกติ
+          username: createVendorUser.username || null, // username อาจเป็น null หากมาจาก OAuth
+          email: createVendorUser.email || null,
           firstName: createVendorUser.firstname,
           lastName: createVendorUser.lastname || null,
           password: hashedPassword || null, // password เป็น null ถ้าเป็น OAuth user
@@ -114,14 +146,16 @@ export class VendorService {
           updatedAt: new Date(),
         },
       });
+
+      // สร้าง verification token และส่งอีเมล
       const verificationToken =
         await this.authService.generateEmailVerificationToken(result.uid);
 
-      // Send verification email
       await this.mailerService.sendVerificationEmail(
         result.email,
         verificationToken,
       );
+
       if (!result) {
         throw new HttpException(
           'Error while creating vendor user',
@@ -131,11 +165,12 @@ export class VendorService {
 
       return { message: 'User created successfully' };
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      // จัดการข้อผิดพลาด
+      throw new HttpException(
+        error || 'Unexpected error',
+        HttpStatus.BAD_REQUEST,
+      );
     }
-  }
-  catch(error) {
-    throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
   }
 
   async getVendorByName(username: string) {
@@ -168,7 +203,7 @@ export class VendorService {
     }
   }
 
-  async getVendorByuid(uid: string) {
+  async getVendorUserByuid(uid: string) {
     const result = await this.prisma.vendorUser.findFirst({
       where: {
         uid: uid,
@@ -194,10 +229,12 @@ export class VendorService {
       },
     });
     if (!result) {
-      throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);
+      throw new HttpException('vendoruser not found', HttpStatus.NOT_FOUND);
     }
     return result;
   }
+
+
   async verifyEmail(uuid: string) {
     const user = await this.prisma.vendorUser.update({
       where: {
@@ -239,33 +276,29 @@ export class VendorService {
     });
   }
 
-  async createVendor(createVendor : CreateVendorDto){
-      try {
-        await this.prisma.vendor.create({
-          data : {
-            ...createVendor
-          }
-        })
-      } catch (error) {
-        return error
-      }
+  async createVendor(createVendor: CreateVendorDto) {
+    try {
+      await this.prisma.vendor.create({
+        data: {
+          ...createVendor,
+        },
+      });
+    } catch (error) {
+      return error;
+    }
   }
   async updateVendor(id: number, updateVendorDto: UpdateVendorDto) {
     try {
-       await this.prisma.vendor.update({
-      where: {
-        id: id,
-      },
-      data: {
-        ...updateVendorDto,
-      },
-    
-    });
+      await this.prisma.vendor.update({
+        where: {
+          id: id,
+        },
+        data: {
+          ...updateVendorDto,
+        },
+      });
     } catch (error) {
-      return error
+      return error;
     }
-   
-
-  
   }
 }

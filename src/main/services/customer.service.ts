@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   forwardRef,
   HttpException,
   HttpStatus,
@@ -33,6 +34,9 @@ export class CustomerService {
   }
   async createCustomer(createCustomerDto: CreateCustomerDto) {
     try {
+      if(!createCustomerDto){
+        throw new BadRequestException("Not enough data to register")
+      }
       let hashedPassword;
       const uid = firstPartUid();
       // ตรวจสอบว่ามี password หรือไม่ ถ้ามีก็ทำการ hash

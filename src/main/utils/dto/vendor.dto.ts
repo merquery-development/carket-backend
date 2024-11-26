@@ -67,24 +67,28 @@ export class UploadVendorBannerDto {
 
 export class CreateVendorDto {
   @IsString()
+  @IsNotEmpty()
   @ApiProperty({
     example: 'testvendor',
   })
   name: string;
 
   @IsEmail()
+  @IsNotEmpty()
   @ApiProperty({
     example: 'testemal@email.com',
   })
   email: string;
 
-  @IsPhoneNumber()
+  @IsPhoneNumber('TH')
+  @IsNotEmpty()
   @ApiProperty({
-    example: '01234578',
+    example: '+6601234578',
   })
   phone: string;
 
   @IsString()
+  @IsNotEmpty()
   @ApiProperty({
     example: '123/456 midtown',
   })

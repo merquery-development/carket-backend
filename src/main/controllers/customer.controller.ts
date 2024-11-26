@@ -28,8 +28,7 @@ import { CreateCustomerDto } from '../utils/dto/customer.dto';
 export class CustomerController {
   constructor(
     private readonly customerService: CustomerService,
-    @Inject(forwardRef(() => AuthService))
-    private readonly authService: AuthService,
+ 
   ) {}
 
   @Post('')
@@ -47,13 +46,14 @@ export class CustomerController {
   getAllCustomer() {
     return this.customerService.getCustomer();
   }
+  //later
   @Get('favorites/:customerUid')
   @ApiOperation({ summary: 'Get customer favorites' })
   @ApiOkResponse({ description: 'List of favorite cars for the customer.' })
   getCustomerFavorites(@Param('customerUid') customerUid: string) {
     return this.customerService.getCustomerFavorites(customerUid);
   }
-
+//later
   @Post('favorites/:carpostId')
   @ApiOperation({ summary: 'Add a car to customer favorites' })
   @ApiBearerAuth()

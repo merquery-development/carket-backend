@@ -65,12 +65,6 @@ export class CreateCarPostDto {
   @Min(0) // Ensures carId is not less than 0
   carId: number;
 
-  @ApiProperty({
-    example: 4,
-  })
-  @IsInt()
-  @Min(0) // Ensures vendorId is not less than 0
-  vendorId: number;
 
   @ApiProperty({
     example: 25000.99,

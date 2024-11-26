@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -9,7 +10,6 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -27,7 +27,6 @@ import {
   CreateVendorUserDto,
   UpdateVendorDto,
 } from '../utils/dto/vendor.dto';
-import { AdminGuard } from '../guards/admin.guard';
 @ApiTags('vendors')
 @Controller('vendors')
 export class VendorController {
@@ -45,7 +44,7 @@ export class VendorController {
   @ApiOperation({ summary: 'Retrieve vendoruser by uid' })
   @Get('user/uid/:uid')
   getVendorUserById(@Param('uid') uid: string) {
-    return this.vendorService.getVendorByuid(uid);
+    return this.vendorService.getVendorUserByuid(uid);
   }
   @Get('user')
   @HttpCode(200)
@@ -124,13 +123,19 @@ export class VendorController {
     }
   }
 
-  @UseGuards(AdminGuard) //only admin from vendor can do 
+  // @UseGuards(AdminGuard) //only admin from vendor can do
   @Put('id/:id')
   @ApiOperation({ summary: 'Update an existing vendor' })
   @ApiResponse({ status: 200, description: 'Vendor updated successfully.' })
   @ApiResponse({ status: 400, description: 'Error updating vendor.' })
   updateVendor(@Param('id') id: string, @Body() updateDto: UpdateVendorDto) {
     try {
+      console.log();
+
+      if (Number(id) <= 0) {
+        throw new BadRequestException('Id incorrect');
+      }
+
       const updateVendor = this.vendorService.updateVendor(
         Number(id),
         updateDto,

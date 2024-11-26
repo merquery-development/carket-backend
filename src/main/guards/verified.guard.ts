@@ -27,14 +27,14 @@ export class EmailVerifiedGuard implements CanActivate {
       );
     }
     const vendor = await this.vendorService
-      .getVendorByuid(user.uid)
+      .getVendorUserByuid(user.uid)
       .catch((error) => {
         throw new UnauthorizedException('Authguard error', error.message);
       });
 
-      if (!vendor || !vendor.isEnable) {
-        throw new UnauthorizedException('Vendor is not enabled');
-      }
+    if (!vendor || !vendor.isEnable) {
+      throw new UnauthorizedException('Vendor is not enabled');
+    }
     return true;
   }
   private extractTokenFromHeader(request: Request): string | undefined {
