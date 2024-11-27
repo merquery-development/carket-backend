@@ -4,9 +4,16 @@ import {
   S3,
   S3ClientConfig,
 } from '@aws-sdk/client-s3';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
+import { AuthService } from './auth.service';
 import { CarService } from './car.service';
 import { VendorService } from './vendor.service';
 
@@ -15,8 +22,12 @@ export class FileUploadService {
   private s3: S3;
 
   constructor(
+    @Inject(forwardRef(() => VendorService))
     private readonly vendorService: VendorService,
+    @Inject(forwardRef(() => CarService))
     private readonly carService: CarService,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
   ) {
     const s3ClientConfig: S3ClientConfig = {
       region: 'auto', // Set the appropriate region
@@ -102,15 +113,13 @@ export class FileUploadService {
     return carPictures;
   }
   async uploadCategoryLogo(id: number, logo: Express.Multer.File) {
-    const allowedExtensions = ['jpg', 'jpeg', 'png', 'svg', 'svg+xml']; // Allow 'svg' and 'svg+xml'
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'svg', 'svg+xml'];
     const maxSizeInBytes = 500 * 1024; // 500KB
 
-    // ตรวจสอบไฟล์โลโก้ธรรมดา
+    // ตรวจสอบประเภทไฟล์และขนาด
     let logoExtension = logo.mimetype.split('/')[1].toLowerCase();
-
-    // Normalize 'svg+xml' to 'svg' for consistent handling
     if (logoExtension === 'svg+xml') {
-      logoExtension = 'svg';
+      logoExtension = 'svg'; // Normalize for consistent handling
     }
 
     if (
@@ -121,47 +130,53 @@ export class FileUploadService {
     }
 
     const logoOriginalname = logo.originalname.split('.')[0].toLowerCase();
-
-    // กำหนด path  category
     const folderPath = 'logos/category';
     const logoName = `${logoOriginalname}.${logoExtension}`;
     const logoKey = `${folderPath}/${logoName}`;
+    const envUrl = process.env.S3_PUBLIC_URL || 'https://your-r2-public-url';
+    const logoUrl = `${envUrl}/${logoKey}`;
 
     try {
-      // อัปโหลดโลโก้ธรรมดา
-      await this.s3.send(
+      // อัปโหลดโลโก้ไปยัง S3
+      const svg = await this.s3.send(
         new PutObjectCommand({
           Bucket: process.env.BUCKET,
           Key: logoKey,
           Body: logo.buffer,
-          ContentType: `image/${logoExtension}`,
+          ContentType: 'image/svg+xml', // กำหนดให้ SVG แสดงผลได้ในเบราว์เซอร์
+          ContentDisposition: 'inline', // บังคับให้แสดงผลในเบราว์เซอร์
+          Metadata: {
+            type: 'image',
+            format: 'svg',
+          },
         }),
       );
-      const cars = await this.carService.getCategoryByCarId(id);
-      if (cars.logoName) {
+
+      // ดึงข้อมูลหมวดหมู่รถ
+      const category = await this.carService.getCategoryByCarId(id);
+      if (category.logoName) {
+        // ลบโลโก้เดิมออกจาก S3
+        const oldLogoKey = `${folderPath}/${category.logoName}`;
         try {
-          const deleteCommand = new DeleteObjectCommand({
-            Bucket: process.env.BUCKET,
-            Key: `${logoKey}`,
-          });
-          await this.s3.send(deleteCommand);
-        } catch (error) {
-          throw new HttpException(
-            `File delete failed: ${error.message}`,
-            HttpStatus.INTERNAL_SERVER_ERROR,
+          await this.s3.send(
+            new DeleteObjectCommand({
+              Bucket: process.env.BUCKET,
+              Key: oldLogoKey,
+            }),
           );
+        } catch (deleteError) {
+          console.warn(`Failed to delete old logo: ${deleteError.message}`);
         }
       }
+
+      // อัปเดตโลโก้ในฐานข้อมูล
       await this.carService.updateCategoryLogo(
         id,
-        '/' + logoName,
-        '/' + folderPath,
+        `/${logoName}`,
+        `/${folderPath}`,
       );
 
-      const envUrl = process.env.S3_PUBLIC_URL || 'https://your-r2-public-url';
-      const logoUrl = `${envUrl}/${logoKey}`;
-
-      return `Logos uploaded: ${logoUrl}`;
+      return { message: logoUrl };
     } catch (error) {
       throw new HttpException(
         `File upload failed: ${error.message}`,
@@ -320,4 +335,78 @@ export class FileUploadService {
 
     return bannerImages;
   }
-}
+
+  async uploadVendorUserProfile(
+    file: Express.Multer.File | Buffer,
+    token: string,
+  ): Promise<string> {
+    const uid = uuidv4();
+    let fileExtension: string;
+    let fileBuffer: Buffer;
+
+    // ตรวจสอบประเภทของไฟล์
+    if (file instanceof Buffer) {
+      fileBuffer = file;
+      fileExtension = 'png'; // Default to PNG สำหรับ Buffer input
+    } else {
+      fileBuffer = file.buffer;
+      fileExtension = file.mimetype.split('/')[1].toLowerCase();
+    }
+   
+    const profile = await this.authService.getProfile(token);
+ 
+    const allowedExtensions = ['jpg', 'jpeg', 'png'];
+    const maxSizeInBytes = 10000 * 1024; // 500KB
+
+    // ตรวจสอบขนาดไฟล์
+    if (fileBuffer.length > maxSizeInBytes) {
+      throw new HttpException(
+        'File size exceeds 500KB limit.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // ตรวจสอบชนิดของไฟล์
+    if (!allowedExtensions.includes(fileExtension)) {
+      throw new HttpException(
+        'Invalid file type. Only jpg, jpeg, and png are allowed.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const folderPath = 'pictures/vendor_user_profiles';
+    const imageName = `${uid}.${fileExtension}`;
+    const key = `${folderPath}/${imageName}`;
+   
+
+    try {
+      // อัปโหลดไปยัง S3
+      const command = new PutObjectCommand({
+        Bucket: process.env.BUCKET,
+        Key: key,
+        Body: fileBuffer,
+        ContentType: `image/${fileExtension}`,
+      });
+
+      await this.s3.send(command);
+
+      // สร้าง URL รูปโปรไฟล์
+      const envUrl = process.env.S3_PUBLIC_URL || 'https://your-r2-public-url';
+      const imageUrl = `${envUrl}/${key}`;
+
+      // อัปเดตข้อมูลในฐานข้อมูล
+      await this.vendorService.updateVendorUserProfile(
+        profile.vendoruid,
+        folderPath,
+        imageName,
+      );
+
+      return imageUrl;
+    } catch (error) {
+      throw new HttpException(
+        `Profile upload failed: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  }

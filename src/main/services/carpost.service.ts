@@ -4,12 +4,10 @@ import { PrismaService } from 'src/prisma.service';
 import { getCarsAndStats } from '../utils/car.uti';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 import { firstPartUid } from '../utils/pagination';
-import { AuthService } from './auth.service';
 @Injectable()
 export class CarPostService {
-  constructor(private readonly prisma: PrismaService,
-  ) {}
-  async createCarPost(vId: number ,createCarPostDto: CreateCarPostDto) {
+  constructor(private readonly prisma: PrismaService) {}
+  async createCarPost(vId: number, createCarPostDto: CreateCarPostDto) {
     // @comment no vendor validation
     // @comment no price validatation < 0
     // @comment no year validation < 0
@@ -17,7 +15,7 @@ export class CarPostService {
     try {
       const uid = firstPartUid();
       // console.log(createCarPostDto[1]);
-      
+
       const result = await this.prisma.carPost.create({
         data: {
           carId: createCarPostDto.carId,
@@ -109,13 +107,23 @@ export class CarPostService {
           },
         },
         vendor: {
-          select: { name: true },
+          select: {
+            name: true,
+            users: {
+              select: {
+                username: true,
+                profilePicturePath: true, // เพิ่ม path ของรูป
+                profilePictureName: true, // เพิ่มชื่อรูป
+              },
+            },
+          },
         },
         pictures: {
           select: {
             pictureName: true,
             picturePath: true,
-          }}
+          },
+        },
       },
       fieldMapping: {
         priceField: 'price', // Use CarPost's price
@@ -125,18 +133,25 @@ export class CarPostService {
       },
       ...params, // Pass other params dynamically
     });
- 
-    
+  
     result.items = result.items.map((item) => ({
       id: item.id,
       basePrice: item.price,
       year: item.year,
+      mileage: item.mileage,
+      vendor: {
+        name: item.vendor.name,
+        profile: item.vendor.users.map((user) => `${user.profilePicturePath}${user.profilePictureName}`
+           
+        ),
+      },
       category: item.car?.Category?.name || null, // Extract category name
       brand: item.car?.Brand?.name || null, // Extract brand name
       pictures: item.pictures.map(
         (picture) => `${picture.picturePath}${picture.pictureName}`,
       ), // เก็บทุกรูปในรูปแบบ array ของ string path
     }));
+  
     return result;
   }
   async getCarPostById(id: string) {
@@ -260,7 +275,7 @@ export class CarPostService {
         },
       },
     });
-console.log(carPosts[0].price);
+    console.log(carPosts[0].price);
 
     // สุ่มและเลือกจำนวนรถที่ต้องการ
     const randomCars = carPosts

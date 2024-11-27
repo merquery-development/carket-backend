@@ -301,4 +301,20 @@ export class VendorService {
       return error;
     }
   }
+
+  async updateVendorUserProfile(userUid : string, picturePath : string, pictureName: string){
+    try {
+      await this.prisma.vendorUser.update({
+        where: {
+          uid: userUid,
+        },
+        data: {
+          profilePictureName: '/' + pictureName,
+          profilePicturePath: '/' + picturePath,
+        },
+      });
+    } catch (error) {
+      return error;
+    }
+  }
 }

@@ -15,7 +15,8 @@ import { AuthService } from './auth.service';
 @Injectable()
 export class CustomerService {
   constructor(
-    private readonly prisma: PrismaService, @Inject(forwardRef(() => AuthService))
+    private readonly prisma: PrismaService, 
+    @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
     
   ) {}

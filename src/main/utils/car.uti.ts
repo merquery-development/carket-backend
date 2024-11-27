@@ -37,6 +37,7 @@ export async function getCarsAndStats({
         [sortBy]: sortOrder,
       },
       select: customSelect,
+     
     }),
 
     prismaModel.count({ where }),
