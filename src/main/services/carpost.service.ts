@@ -94,7 +94,7 @@ export class CarPostService {
 
   async getCarPosts(params) {
     const result = await getCarsAndStats({
-      prismaModel: this.prisma.carPost, // Use CarPost model
+      prismaModel: this.prisma.carPost, // ใช้ CarPost model
       customSelect: {
         id: true,
         price: true,
@@ -126,10 +126,10 @@ export class CarPostService {
         },
       },
       fieldMapping: {
-        priceField: 'price', // Use CarPost's price
+        priceField: 'price',
         mileageField: 'mileage',
-        brandIdField: 'car.brandId', // Reference related Car model
-        categoryIdField: 'car.categoryId', // Reference related Car model
+        brandIdField: 'car.brandId',
+        categoryIdField: 'car.categoryId',
       },
       ...params, // Pass other params dynamically
     });
@@ -141,15 +141,16 @@ export class CarPostService {
       mileage: item.mileage,
       vendor: {
         name: item.vendor.name,
-        profile: item.vendor.users.map((user) => `${user.profilePicturePath}${user.profilePictureName}`
-           
-        ),
+        // รวม path และ name ของรูปโปรไฟล์เป็น string เดียว
+        profile: item.vendor.users.map(
+          (user) => `${user.profilePicturePath}${user.profilePictureName}`
+        ).join(''), // ใช้ join('') เพื่อรวมเป็น string เดียว
       },
-      category: item.car?.Category?.name || null, // Extract category name
-      brand: item.car?.Brand?.name || null, // Extract brand name
+      category: item.car?.Category?.name || null,
+      brand: item.car?.Brand?.name || null,
       pictures: item.pictures.map(
         (picture) => `${picture.picturePath}${picture.pictureName}`,
-      ), // เก็บทุกรูปในรูปแบบ array ของ string path
+      ),
     }));
   
     return result;
