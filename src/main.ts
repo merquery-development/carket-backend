@@ -9,7 +9,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Api')
     .setDescription('cardealer api')
-    .setVersion('1.0') //frontend
+    .setVersion('1.1') //frontend
     .addBearerAuth(undefined, 'defaultBearerAuth')
 
     .build();
