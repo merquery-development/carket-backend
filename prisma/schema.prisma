@@ -64,10 +64,8 @@ model CustomerFavorite {
   customerUid   String     @map("customer_uid") // Foreign key to Customer
   postId       Int      @map("post_id")      // Foreign key to Car
   createdAt   DateTime @default(now())     @map("created_at")
-
   customer    Customer @relation(fields: [customerUid], references: [uid])
   post         CarPost      @relation(fields: [postId], references: [id])
-
   @@unique([customerUid, postId]) // Ensure each customer can favorite a car only once
 
   @@map("customer_favorites")

@@ -180,24 +180,50 @@ export class CustomerService {
     }
   
     const customer = await this.authService.getProfile(token);
+
+    
     if (!customer) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
-    if (!customer) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
+ 
+   
   
     try {
       await this.prisma.customerFavorite.create({
         data: {
-          customerUid: customer.uid,
+          customerUid: customer.customeruid,
           postId: Number(carpostId),
         },
       });
       return { message: 'Car successfully added to favorites' };
     } catch (error) {
+
+      
       throw new HttpException('Failed to add car to favorites', HttpStatus.BAD_REQUEST);
     }
   }
+
+
+  async getLikedCar(token: string){
+    if (!token) {
+      throw new HttpException('Token is required', HttpStatus.UNAUTHORIZED);
+    }
+  
+    const customer = await this.authService.getProfile(token);
+    if (!customer) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    try {
+      const result =  await this.prisma.customerFavorite.findMany({
+        where : {
+          customerUid : customer.customeruid
+        },
+      });
+      return result;
+    } catch (error) {
+      throw new HttpException('Failed to retrieve liked car', HttpStatus.BAD_REQUEST);
+    }
+  }
+  
   }
 

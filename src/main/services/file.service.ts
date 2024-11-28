@@ -129,31 +129,30 @@ export class FileUploadService {
       throw new HttpException('Invalid logo file', HttpStatus.BAD_REQUEST);
     }
 
+
     const logoOriginalname = logo.originalname.split('.')[0].toLowerCase();
     const folderPath = 'logos/category';
     const logoName = `${logoOriginalname}.${logoExtension}`;
     const logoKey = `${folderPath}/${logoName}`;
     const envUrl = process.env.S3_PUBLIC_URL || 'https://your-r2-public-url';
     const logoUrl = `${envUrl}/${logoKey}`;
-
+   
     try {
       // อัปโหลดโลโก้ไปยัง S3
-      const svg = await this.s3.send(
+   await this.s3.send(
         new PutObjectCommand({
           Bucket: process.env.BUCKET,
           Key: logoKey,
           Body: logo.buffer,
           ContentType: 'image/svg+xml', // กำหนดให้ SVG แสดงผลได้ในเบราว์เซอร์
           ContentDisposition: 'inline', // บังคับให้แสดงผลในเบราว์เซอร์
-          Metadata: {
-            type: 'image',
-            format: 'svg',
-          },
+
         }),
       );
 
       // ดึงข้อมูลหมวดหมู่รถ
       const category = await this.carService.getCategoryByCarId(id);
+      if(category){
       if (category.logoName) {
         // ลบโลโก้เดิมออกจาก S3
         const oldLogoKey = `${folderPath}/${category.logoName}`;
@@ -168,18 +167,19 @@ export class FileUploadService {
           console.warn(`Failed to delete old logo: ${deleteError.message}`);
         }
       }
-
+    }
       // อัปเดตโลโก้ในฐานข้อมูล
       await this.carService.updateCategoryLogo(
         id,
         `/${logoName}`,
         `/${folderPath}`,
       );
+    
 
       return { message: logoUrl };
     } catch (error) {
       throw new HttpException(
-        `File upload failed: ${error.message}`,
+        `File upload failed: ${error}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
