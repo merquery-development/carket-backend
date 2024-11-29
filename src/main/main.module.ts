@@ -30,6 +30,8 @@ import { VendorService } from './services/vendor.service';
 import { CarViewInterceptor } from './utils/carviewIntercep';
 import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
+import { SubscriptionService } from './services/subscription.service';
+import { SubscriptionControllers } from './controllers/subscipt.controller';
 @Module({
   imports: [
     PassportModule,
@@ -62,6 +64,7 @@ import { GoogleStrategy } from './utils/strategy/google.strategy';
     FileVendorUploadController,
     RoleController,
     ReviewController,
+    SubscriptionControllers
   ],
   providers: [
     // {
@@ -84,6 +87,7 @@ import { GoogleStrategy } from './utils/strategy/google.strategy';
     RoleService,
     AdminGuard,
     EmailVerifiedGuard,
+    SubscriptionService
   ],
 })
 export class MainModule {}

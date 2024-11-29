@@ -178,16 +178,10 @@ export class CustomerService {
     if (!token) {
       throw new HttpException('Token is required', HttpStatus.UNAUTHORIZED);
     }
-  
     const customer = await this.authService.getProfile(token);
-
-    
     if (!customer) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
- 
-   
-  
     try {
       await this.prisma.customerFavorite.create({
         data: {
