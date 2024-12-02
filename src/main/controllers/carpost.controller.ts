@@ -120,7 +120,9 @@ export class CarPostController {
     // ดึงข้อมูลโปรไฟล์จาก token
     const profile = await this.authService.getProfile(token);
     if (!profile || !profile.vendorUid) {
-      throw new UnauthorizedException('Invalid or expired token require vendor login');
+      throw new UnauthorizedException(
+        'Invalid or expired token require vendor login',
+      );
     }
 
     // ดึงข้อมูล vendor จาก vendorUid
@@ -200,10 +202,35 @@ export class CarPostController {
   async updateCarPost(
     @Param('carPostId') carPostId: string,
     @Body() updateCarPostDto: UpdateCarPostDto,
+    @Req() request: Request,
+
   ) {
+    const token = request.headers['authorization']?.split(' ')[1];
+    if (!token) {
+      throw new BadRequestException('Authorization token is missing');
+    }
+
+    // ดึงข้อมูลโปรไฟล์จาก token
+    const profile = await this.authService.getProfile(token);
+    if (!profile || !profile.vendorUid) {
+      throw new UnauthorizedException(
+        'Invalid or expired token require vendor login',
+      );
+    }
+
+    // ดึงข้อมูล vendor จาก vendorUid
+    const vendorUser = await this.vendorService.getVendorUserByuid(
+      profile.vendorUid,
+    );
+    if (!vendorUser) {
+      throw new NotFoundException('Vendor not found');
+    }
+
     try {
       const updatedCarPost = await this.carPostService.updateCarPost(
+        
         carPostId,
+        vendorUser.vendorId,
         updateCarPostDto,
       );
       return updatedCarPost;
@@ -288,7 +315,6 @@ export class CarPostController {
   async deleteSoftCar(@Req() request, @Param('carId') carId: string) {
     try {
       const role = request['role'];
-
 
       const deletedCar = await this.carPostService.deleteSoftCarPost(carId);
       return { message: 'Car deleted successfully', deletedCar };

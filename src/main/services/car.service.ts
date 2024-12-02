@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { getCarsAndStats } from '../utils/car.uti';
+import { getCarsAndStats } from '../utils/car.util';
 import { CreateCarDto, UpdateCarDto } from '../utils/dto/car.dto';
 
 @Injectable()
@@ -25,22 +25,18 @@ export class CarService {
       ...params,
     });
 
-      result.items = result.items.map((item) => ({
+    result.items = result.items.map((item) => ({
       id: item.id,
       basePrice: item.basePrice,
       year: item.year,
       category: item.Category?.name || null, // Extract category name
       brand: item.Brand?.name || null, // Extract brand name
-
-      
     }));
-    return result
+    return result;
   }
-  
 
   async createCar(createCarDto: CreateCarDto) {
     try {
-      
       const result = await this.prisma.car.create({
         data: {
           categoryId: createCarDto.categoryId,
@@ -135,9 +131,9 @@ export class CarService {
         where: {
           cars: {
             some: {
-              id: id
-            }
-          }
+              id: id,
+            },
+          },
         },
       });
       return result;
@@ -145,7 +141,6 @@ export class CarService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
-
 
   async updateBrandLogo(
     brandId: number,

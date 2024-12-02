@@ -1,20 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { getCarsAndStats } from '../utils/car.uti';
+import { getCarsAndStats } from '../utils/car.util';
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 import { firstPartUid } from '../utils/pagination';
 @Injectable()
 export class CarPostService {
   constructor(private readonly prisma: PrismaService) {}
   async createCarPost(vId: number, createCarPostDto: CreateCarPostDto) {
-    // @comment no vendor validation
-    // @comment no price validatation < 0
-    // @comment no year validation < 0
-    // @comment why also create view count ? default should be zero
     try {
       const uid = firstPartUid();
-      // console.log(createCarPostDto[1]);
 
       const result = await this.prisma.carPost.create({
         data: {
@@ -45,27 +40,35 @@ export class CarPostService {
     }
   }
 
-  async updateCarPost(id: string, updateCarPostDto: UpdateCarPostDto) {
-    // @comment no vendor validation, to check if the vendor update there own carpost of someone else's carpost
-    // @comment also no data validation
+  async updateCarPost(
+    id: string,
+    vendorId: number,
+    updateCarPostDto: UpdateCarPostDto,
+  ) {
     try {
-      const result = await this.prisma.carPost.update({
-        where: { id: Number(id) },
+      const result = await this.prisma.carPost.updateMany({
+        where: {
+          id: Number(id),
+          vendorId: vendorId,
+        },
         data: {
           ...updateCarPostDto,
         },
       });
 
-      if (!result) {
+      if (result.count === 0) {
         throw new HttpException(
-          'Error while updating car post',
+          'Error while updating car post or no matching record found',
           HttpStatus.BAD_REQUEST,
         );
       }
 
       return { message: 'Update successful' };
     } catch (error) {
-      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        error.message || 'Unexpected error occurred',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -100,6 +103,7 @@ export class CarPostService {
         price: true,
         mileage: true,
         year: true,
+        favoriteCount: true,
         car: {
           select: {
             Brand: { select: { name: true } },
@@ -133,18 +137,19 @@ export class CarPostService {
       },
       ...params, // Pass other params dynamically
     });
-  
+
     result.items = result.items.map((item) => ({
       id: item.id,
       basePrice: item.price,
       year: item.year,
       mileage: item.mileage,
+      favorite : item.favoriteCount,
       vendor: {
         name: item.vendor.name,
         // รวม path และ name ของรูปโปรไฟล์เป็น string เดียว
-        profile: item.vendor.users.map(
-          (user) => `${user.profilePicturePath}${user.profilePictureName}`
-        ).join(''), // ใช้ join('') เพื่อรวมเป็น string เดียว
+        profile: item.vendor.users
+          .map((user) => `${user.profilePicturePath}${user.profilePictureName}`)
+          .join(''), // ใช้ join('') เพื่อรวมเป็น string เดียว
       },
       category: item.car?.Category?.name || null,
       brand: item.car?.Brand?.name || null,
@@ -152,7 +157,7 @@ export class CarPostService {
         (picture) => `${picture.picturePath}${picture.pictureName}`,
       ),
     }));
-  
+
     return result;
   }
   async getCarPostById(id: string) {

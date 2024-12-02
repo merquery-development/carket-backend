@@ -2,9 +2,12 @@ import {
   BadRequestException,
   Body,
   Controller,
+  forwardRef,
   Get,
+  HttpCode,
   HttpException,
   HttpStatus,
+  Inject,
   Param,
   Post,
   Req,
@@ -14,16 +17,22 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { CustomerService } from '../services/customer.service';
 import { CreateCustomerDto } from '../utils/dto/customer.dto';
+import { request } from 'http';
+import { extractTokenFromHeader } from '../utils/token.util';
+import { AuthService } from '../services/auth.service';
 @ApiTags('customers')
 @Controller('customers')
 @ApiBearerAuth('defaultBearerAuth')
 export class CustomerController {
-  constructor(private readonly customerService: CustomerService) {}
+  constructor(private readonly customerService: CustomerService,
+    @Inject(forwardRef(() => AuthService))
+  private readonly authService: AuthService,) {}
 
   @Post('')
   @ApiOperation({ summary: 'Register Customer' })
@@ -114,5 +123,28 @@ export class CustomerController {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+  @Post('toggle/:postId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Toggle favorite status for a car post' })
+  @ApiParam({
+    name: 'postId',
+    type: Number,
+    description: 'ID of the car post to toggle favorite',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully toggled favorite status.',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input or bad request.' })
+  async toggleFavorite(@Param('postId') postId: number, @Req() request: Request) {
+    const token = extractTokenFromHeader(request);
+    const profile = await this.authService.getProfile(token)
+    
+    
+    return await this.customerService.toggleFavoriteCarPost(
+      profile.customeruid,
+      Number(postId),
+    );
   }
 }

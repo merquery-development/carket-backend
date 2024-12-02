@@ -117,10 +117,7 @@ export class CreateCarpostPicDto {
   @Transform(({ value }) => Number(value), { toClassOnly: true }) // Correct usage of Transform
   carId: number;
 
-  @IsInt()
-  @Min(1)
-  @Transform(({ value }) => Number(value), { toClassOnly: true }) // Correct usage of Transform
-  vendorId: number;
+
 
   @IsNumber()
   @Min(0)

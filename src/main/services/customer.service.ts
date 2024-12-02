@@ -219,5 +219,60 @@ export class CustomerService {
     }
   }
   
+  async toggleFavoriteCarPost(customerUid: string, postId: number) {
+    try {
+      const parsedPostId = Number(postId);
+
+      
+      // ตรวจสอบว่ามี Favorite อยู่แล้วหรือไม่
+      const existingFavorite = await this.prisma.customerFavorite.findUnique({
+        where: {
+          customerUid_postId: {
+            customerUid,
+            postId : parsedPostId
+          },
+        },
+      });
+  
+      if (existingFavorite) {
+        // ถ้ามี Favorite แล้ว ให้ลบออก
+        await this.prisma.customerFavorite.delete({
+          where: {
+            id: existingFavorite.id,
+          },
+        });
+  
+        // ลดค่า favoriteCount
+        await this.prisma.carPost.update({
+          where: { id: postId },
+          data: {
+            favoriteCount: { decrement: 1 },
+          },
+        });
+  
+        return { message: 'Post removed from favorites successfully' };
+      } else {
+        // ถ้ายังไม่มี Favorite ให้เพิ่มใหม่
+        await this.prisma.customerFavorite.create({
+          data: {
+            customerUid,
+            postId,
+          },
+        });
+  
+        // เพิ่มค่า favoriteCount
+        await this.prisma.carPost.update({
+          where: { id: postId },
+          data: {
+            favoriteCount: { increment: 1 },
+          },
+        });
+  
+        return { message: 'Post added to favorites successfully' };
+      }
+    } catch (error) {
+      throw new HttpException(error.message || 'Unexpected error occurred', HttpStatus.BAD_REQUEST);
+    }
+  }
   }
 
