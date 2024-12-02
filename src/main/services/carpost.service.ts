@@ -113,6 +113,7 @@ export class CarPostService {
         vendor: {
           select: {
             name: true,
+            address: true ,
             users: {
               select: {
                 username: true,
@@ -146,6 +147,7 @@ export class CarPostService {
       favorite : item.favoriteCount,
       vendor: {
         name: item.vendor.name,
+        address : item.vendor.address,
         // รวม path และ name ของรูปโปรไฟล์เป็น string เดียว
         profile: item.vendor.users
           .map((user) => `${user.profilePicturePath}${user.profilePictureName}`)
