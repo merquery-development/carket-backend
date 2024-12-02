@@ -158,7 +158,7 @@ export class CarPostService {
       ),
     }));
 
-    return result;
+    return result.items;
   }
   async getCarPostById(id: string) {
     try {
