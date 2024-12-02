@@ -32,7 +32,7 @@ export class CarService {
       category: item.Category?.name || null, // Extract category name
       brand: item.Brand?.name || null, // Extract brand name
     }));
-    return result;
+    return result.items;
   }
 
   async createCar(createCarDto: CreateCarDto) {
