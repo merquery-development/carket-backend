@@ -289,7 +289,7 @@ export class CarPostController {
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
     @Query('modelName') modelName?: string, // เพิ่ม modelName
-    @Query('vendorName') vendorName?: string, // เพิ่ม vendorName
+    @Query('vendorName') vendorName?: string, 
   ) {
     try {
       const result = await this.carPostService.getCarPosts({
