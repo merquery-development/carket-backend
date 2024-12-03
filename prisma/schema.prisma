@@ -8,11 +8,15 @@ datasource db {
 }
 
 model Vendor {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String
-  phone     String
-  address   String
+  id             Int     @id @default(autoincrement())
+  uid            String? @unique @default(uuid()) @map("uid")
+  name           String
+  email          String
+  phone          String
+  address        String
+  storeImageName String? @map("store_image_name")
+  storeImagePath String? @map("store_image_path")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
@@ -193,14 +197,14 @@ model CarPost {
 }
 
 model Category {
-  id        Int      @id @default(autoincrement())
-  logoName  String?  @map("logo_name")
-  logoPath  String?  @map("logo_path")
-  logoNameActive  String?  @map("logo_name_active")
-  logoPathActive  String?  @map("logo_path_active")
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-  cars      Car[]
+  id             Int      @id @default(autoincrement())
+  logoName       String?  @map("logo_name")
+  logoPath       String?  @map("logo_path")
+  logoNameActive String?  @map("logo_name_active")
+  logoPathActive String?  @map("logo_path_active")
+  name           String
+  createdAt      DateTime @default(now()) @map("created_at")
+  cars           Car[]
 
   @@map("categories")
 }
@@ -254,11 +258,11 @@ model UserCarView {
 }
 
 model SubscriptionPackage {
-  id          Int     @id @default(autoincrement())
-  packageName String  @map("package_name")
-  carPostSlot Int     @map("car_post_slot")
-  price       Decimal @db.Decimal(12, 2)
-  durationInDay Int  @map("duration_in_day")
+  id            Int     @id @default(autoincrement())
+  packageName   String  @map("package_name")
+  carPostSlot   Int     @map("car_post_slot")
+  price         Decimal @db.Decimal(12, 2)
+  durationInDay Int     @map("duration_in_day")
 
   vendorSubscriptions VendorSubscription[] // ความสัมพันธ์แบบ One-to-Many
 
@@ -266,19 +270,18 @@ model SubscriptionPackage {
 }
 
 model VendorSubscription {
-  id             Int      @id @default(autoincrement())
-  packageId      Int      @map("package_id")
-  vendorId       Int      @unique @map("vendor_id") //1 to 1 use unique
-  isActive       Boolean  @map("is_active")
-  amountPaid     Decimal  @db.Decimal(12, 2) @map("amount_paid")
-  packageStartAt DateTime @map("package_start_at")
-  packageEndAt   DateTime @map("package_end_at")
-  paidAt         DateTime @map("paid_at")
-  note          String?
+  id                  Int                 @id @default(autoincrement())
+  packageId           Int                 @map("package_id")
+  vendorId            Int                 @unique @map("vendor_id") //1 to 1 use unique
+  isActive            Boolean             @map("is_active")
+  amountPaid          Decimal             @map("amount_paid") @db.Decimal(12, 2)
+  packageStartAt      DateTime            @map("package_start_at")
+  packageEndAt        DateTime            @map("package_end_at")
+  paidAt              DateTime            @map("paid_at")
+  note                String?
   // ความสัมพันธ์
   subscriptionPackage SubscriptionPackage @relation(fields: [packageId], references: [id])
   vendor              Vendor              @relation(fields: [vendorId], references: [id])
 
   @@map("vendor_subscription")
 }
-

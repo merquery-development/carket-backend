@@ -97,10 +97,7 @@ export class CarPostService {
 
   async getCarPosts(params) {
     try {
-      
-    } catch (error) {
-      
-    }
+    } catch (error) {}
     const result = await getCarsAndStats({
       prismaModel: this.prisma.carPost,
       customSelect: {
@@ -143,7 +140,7 @@ export class CarPostService {
       },
       ...params, // Pass other params including modelName and vendorName
     });
-  
+
     result.items = result.items.map((item) => ({
       id: item.id,
       basePrice: item.price,
@@ -162,10 +159,10 @@ export class CarPostService {
       brand: item.car?.Brand?.name || null,
       model: item.car?.Model?.name || null, // เพิ่ม model name ในผลลัพธ์
       pictures: item.pictures.map(
-        (picture) => `${picture.picturePath}${picture.pictureName}`
+        (picture) => `${picture.picturePath}${picture.pictureName}`,
       ),
     }));
-  
+
     return result.items;
   }
   async getCarPostById(id: string) {
@@ -192,7 +189,13 @@ export class CarPostService {
     // Step 2: Check if data is available
     if (!maxPrice._max.price || !minPrice._min.price) {
       throw new Error('ไม่พบข้อมูลราคาที่สามารถคำนวณได้');
-    }
+    }const maxPriceValue = maxPrice._max.price.toNumber();
+    const minPriceValue = minPrice._min.price.toNumber();
+    
+    // คำนวณ barCount สำหรับ all-class
+    const allClassRange = maxPriceValue - minPriceValue;
+    const barCount = allClassRange > 0 ? Math.ceil(allClassRange / 50000) : 1; // ใช้ 1 bar หากช่วงราคาน้อยเกินไป
+    
 
     // Define class ranges
     const classes = [
@@ -204,6 +207,8 @@ export class CarPostService {
         min: minPrice._min.price.toNumber(),
         max: maxPrice._max.price.toNumber(),
         range: 50000,
+
+        barCount, // กำหนด barCount จากการคำนวณที่ปรับแล้ว
       },
     ];
 
@@ -289,7 +294,6 @@ export class CarPostService {
         },
       },
     });
-   
 
     // สุ่มและเลือกจำนวนรถที่ต้องการ
     const randomCars = carPosts

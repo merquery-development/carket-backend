@@ -305,10 +305,11 @@ export class FileUploadService {
 
   async uploadVendorBanner(
     files: Express.Multer.File[] | Buffer[],
-    vendorId: number,
+    token: string,
   ): Promise<string[]> {
     const bannerImages = [];
-
+    const profile = await this.authService.getProfile(token);
+    const vendorUser = await this.vendorService.getVendorUserByuid(profile.vendoruid)
     for (const file of files) {
       const uid = uuidv4();
       let fileExtension: string;
@@ -361,7 +362,7 @@ export class FileUploadService {
 
         // Store in VendorBanner model
         await this.vendorService.updateVendorBanner(
-          vendorId,
+          vendorUser.vendorId,
           folderPath,
           imageName,
         );
@@ -414,7 +415,7 @@ export class FileUploadService {
       );
     }
 
-    const folderPath = 'pictures/vendor_user_profiles';
+    const folderPath = 'pictures/vendor_user_profile';
     const imageName = `${uid}.${fileExtension}`;
     const key = `${folderPath}/${imageName}`;
    
@@ -437,6 +438,80 @@ export class FileUploadService {
       // อัปเดตข้อมูลในฐานข้อมูล
       await this.vendorService.updateVendorUserProfile(
         profile.vendoruid,
+        folderPath,
+        imageName,
+      );
+
+      return imageUrl;
+    } catch (error) {
+      throw new HttpException(
+        `Profile upload failed: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async uploadVendorStoreImage(
+    file: Express.Multer.File | Buffer,
+    token: string,
+  ): Promise<string> {
+    const uid = uuidv4();
+    let fileExtension: string;
+    let fileBuffer: Buffer;
+
+    // ตรวจสอบประเภทของไฟล์
+    if (file instanceof Buffer) {
+      fileBuffer = file;
+      fileExtension = 'png'; // Default to PNG สำหรับ Buffer input
+    } else {
+      fileBuffer = file.buffer;
+      fileExtension = file.mimetype.split('/')[1].toLowerCase();
+    }
+   
+    const profile = await this.authService.getProfile(token);
+    const vendorUser = await this.vendorService.getVendorUserByuid(profile.vendoruid)
+    const allowedExtensions = ['jpg', 'jpeg', 'png'];
+    const maxSizeInBytes = 10000 * 1024; // 500KB
+
+    // ตรวจสอบขนาดไฟล์
+    if (fileBuffer.length > maxSizeInBytes) {
+      throw new HttpException(
+        'File size exceeds 500KB limit.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // ตรวจสอบชนิดของไฟล์
+    if (!allowedExtensions.includes(fileExtension)) {
+      throw new HttpException(
+        'Invalid file type. Only jpg, jpeg, and png are allowed.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const folderPath = 'pictures/vendor_store';
+    const imageName = `${uid}.${fileExtension}`;
+    const key = `${folderPath}/${imageName}`;
+   
+
+    try {
+      // อัปโหลดไปยัง S3
+      const command = new PutObjectCommand({
+        Bucket: process.env.BUCKET,
+        Key: key,
+        Body: fileBuffer,
+        ContentType: `image/${fileExtension}`,
+      });
+
+      await this.s3.send(command);
+
+      // สร้าง URL รูปโปรไฟล์
+      const envUrl = process.env.S3_PUBLIC_URL || 'https://your-r2-public-url';
+      const imageUrl = `${envUrl}/${key}`;
+
+      // อัปเดตข้อมูลในฐานข้อมูล
+      await this.vendorService.updateVendorStore(
+        vendorUser.vendorId,
         folderPath,
         imageName,
       );

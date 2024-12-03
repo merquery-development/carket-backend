@@ -41,14 +41,21 @@ export class VendorController {
   createVendorUser(@Body() postData: CreateVendorUserDto) {
     return this.vendorService.createVendorUser(postData);
   }
+
+  @ApiOperation({ summary: 'Retrieve vendor store by uid' })
+  @Get('/uid/:uid')
+  getVendorByUId(@Param('uid') uid: string) {
+    return this.vendorService.getVendorByuid(uid);
+  }
   @ApiOperation({ summary: 'Retrieve vendoruser by uid' })
   @Get('user/uid/:uid')
-  getVendorUserById(@Param('uid') uid: string) {
+  getVendorUserByUId(@Param('uid') uid: string) {
     return this.vendorService.getVendorUserByuid(uid);
   }
-  @Get('user')
+
+  @Get('')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Get All Data of vendor user that verified email' })
+  @ApiOperation({ summary: 'Get All Data of vendor store ' })
   @ApiOkResponse({
     description: 'All vendor list',
   })
@@ -89,7 +96,7 @@ export class VendorController {
     enum: ['asc', 'desc'],
     description: 'Sort direction (asc or desc)',
   })
-  getVendorUser(
+  getVendor(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
     @Query('name') name?: string,
@@ -107,6 +114,69 @@ export class VendorController {
       sortOrder,
     });
   }
+
+  @Get('user')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Get All Data of vendoruser ' })
+  @ApiOkResponse({
+    description: 'All vendor list',
+  })
+  @ApiNotFoundResponse({
+    description: 'result not found',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal Server Error',
+  })
+  @ApiQuery({
+    name: 'firstName',
+    required: false,
+    type: String,
+    description: 'Filter by firstName',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: String,
+    description: 'Page number for pagination (nullable)',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    type: String,
+    description: 'Number of items per page for pagination (nullable)',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    type: String,
+    description: 'Field to sort by (e.g., createdAt)',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    type: String,
+    enum: ['asc', 'desc'],
+    description: 'Sort direction (asc or desc)',
+  })
+  getVendorUser(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('firstName') firstName?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+  ) {
+    const pageNumber = page ? parseInt(page, 10) : null;
+    const limitNumber = pageSize ? parseInt(pageSize, 10) : null;
+
+    return this.vendorService.getVendorUser({
+      page: pageNumber,
+      pageSize: limitNumber,
+      firstName,
+            sortBy,
+      sortOrder,
+    });
+  }
+
   @Post('')
   @ApiOperation({ summary: 'Register a new vendor' })
   @ApiResponse({ status: 201, description: 'Vendor registration successful.' })

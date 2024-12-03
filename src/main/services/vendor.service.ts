@@ -30,6 +30,30 @@ export class VendorService {
     return await bcrypt.hash(password, saltRounds);
   }
 
+  async getVendorByuid(uid: string) {
+    const result = await this.prisma.vendor.findFirst({
+      where: {
+        uid: uid,
+      },
+      include: {
+        banners: true, // Include related banners
+      },
+    });
+  
+    if (!result) {
+      throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);
+    }
+  
+    // Modify banners to combine `imagePath` and `imageName`
+    const modifiedResult = {
+      ...result,
+      banners: result.banners.map(banner => ({
+        imageUrl: banner.imagePath + banner.imageName, // Combine imagePath and imageName
+      })),
+    };
+  
+    return modifiedResult;
+  }
   async getVendors({
     page = null,
     pageSize = null,
@@ -40,6 +64,71 @@ export class VendorService {
     page?: number | null;
     pageSize?: number | null;
     name?: string;
+    sortBy?: string; // Field to sort by
+    sortOrder?: 'asc' | 'desc'; // Sort direction
+  }) {
+    if (page !== null && (page <= 0 || !Number.isInteger(page))) {
+      throw new BadRequestException('Page must be a positive integer greater than 0');
+    }
+  
+    if (pageSize !== null && (pageSize <= 0 || !Number.isInteger(pageSize))) {
+      throw new BadRequestException('PageSize must be a positive integer greater than 0');
+    }
+  
+    const { skip, take } = getPagination(page, pageSize);
+    const where = {
+      ...(name ? { name: { contains: name } } : {}), // Conditionally add username filter
+    };
+  
+    const [vendor, total] = await Promise.all([
+      this.prisma.vendor.findMany({
+        skip,
+        take,
+        where,
+        orderBy: {
+          [sortBy]: sortOrder, // Dynamic sort field and direction
+        },
+        include: {
+          banners: true, // Include related banners
+        },
+      }),
+      this.prisma.vendor.count({
+        where,
+      }),
+    ]);
+  
+    // Modify banners to combine `imagePath` and `imageName`
+    const modifiedVendors = vendor.map(v => ({
+      ...v,
+      banners: v.banners.map(banner => ({
+        imageUrl: banner.imagePath + banner.imageName, // Combine imagePath and imageName
+      })),
+    }));
+  
+    try {
+      const data = {
+        vendor: modifiedVendors,
+        total,
+        page: page || 1,
+        pageSize: pageSize || total, // Set pageSize to total if null, showing all records
+      };
+  
+      return data;
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  async getVendorUser({
+    page = null,
+    pageSize = null,
+    firstName,
+    sortBy = 'createdAt', // Default sort field
+    sortOrder = 'asc', // Default sort order
+  }: {
+    page?: number | null;
+    pageSize?: number | null;
+    firstName?: string;
     sortBy?: string; // Field to sort by
     sortOrder?: 'asc' | 'desc'; // Sort direction
   }) {
@@ -57,14 +146,12 @@ export class VendorService {
 
     const { skip, take } = getPagination(page, pageSize);
     const where = {
-      users: {
-        some: { isEmailVerified: true }, // Ensure at least one verified user
-      },
-      ...(name ? { name: { contains: name } } : {}), // Conditionally add username filter
+      isEmailVerified : true,
+      ...(firstName ? { firstName: { contains: firstName } } : {}), // Conditionally add username filter
     };
 
-    const [vendor, total] = await Promise.all([
-      this.prisma.vendor.findMany({
+    const [vendorUser, total] = await Promise.all([
+      this.prisma.vendorUser.findMany({
         skip,
         take,
         where,
@@ -72,23 +159,32 @@ export class VendorService {
           [sortBy]: sortOrder, // Dynamic sort field and direction
         },
         select: {
-          id: true,
-          name: true,
+          uid: true,
+          username: true,
+          vendorId: true,
           email: true,
-          phone: true,
-          address: true,
+          isEmailVerified: true,
+          mobileNumber: true,
+          lastLogin : true,
+          nickName : true,
+          firstName: true,
+          lastName : true,
+          profilePicturePath : true,
+          profilePictureName : true,
+          isEnable : true,
+          roleId : true,
           createdAt: true,
           updatedAt: true,
         },
       }),
-      this.prisma.vendor.count({
+      this.prisma.vendorUser.count({
         where,
       }),
     ]);
 
     try {
       const data = {
-        vendor,
+        vendorUser,
         total,
         page: page || 1,
         pageSize: pageSize || total, // Set pageSize to total if null, showing all records
@@ -209,7 +305,6 @@ export class VendorService {
         uid: uid,
       },
       select: {
-        id: true,
         uid: true,
         vendorId: true,
         username: true,
@@ -227,12 +322,14 @@ export class VendorService {
         createdAt: true,
         updatedAt: true,
       },
+      
     });
     if (!result) {
       throw new HttpException('vendoruser not found', HttpStatus.NOT_FOUND);
     }
     return result;
   }
+
 
 
   async verifyEmail(uuid: string) {
@@ -270,16 +367,19 @@ export class VendorService {
     await this.prisma.vendorBanner.create({
       data: {
         vendorId,
-        imageName: '/' + pictureName,
         imagePath: '/' + picturePath,
+        imageName: '/' +     pictureName,
+        
       },
     });
   }
 
   async createVendor(createVendor: CreateVendorDto) {
     try {
+      const uid = firstPartUid();
       await this.prisma.vendor.create({
         data: {
+          uid : uid,
           ...createVendor,
         },
       });
@@ -318,6 +418,21 @@ export class VendorService {
     }
   }
 
+  async updateVendorStore(vendorId : number, picturePath : string, pictureName: string){
+    try {
+      await this.prisma.vendor.update({
+        where: {
+          id: vendorId,
+        },
+        data: {
+          storeImageName: '/' + pictureName,
+          storeImagePath: '/' + picturePath,
+        },
+      });
+    } catch (error) {
+      return error;
+    }
+  }
 
 
 }
