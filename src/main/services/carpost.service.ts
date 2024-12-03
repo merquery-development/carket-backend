@@ -96,8 +96,13 @@ export class CarPostService {
   }
 
   async getCarPosts(params) {
+    try {
+      
+    } catch (error) {
+      
+    }
     const result = await getCarsAndStats({
-      prismaModel: this.prisma.carPost, // ใช้ CarPost model
+      prismaModel: this.prisma.carPost,
       customSelect: {
         id: true,
         price: true,
@@ -108,17 +113,18 @@ export class CarPostService {
           select: {
             Brand: { select: { name: true } },
             Category: { select: { name: true } },
+            Model: { select: { name: true } }, // เพิ่ม Model Name
           },
         },
         vendor: {
           select: {
             name: true,
-            address: true ,
+            address: true,
             users: {
               select: {
                 username: true,
-                profilePicturePath: true, // เพิ่ม path ของรูป
-                profilePictureName: true, // เพิ่มชื่อรูป
+                profilePicturePath: true,
+                profilePictureName: true,
               },
             },
           },
@@ -132,34 +138,34 @@ export class CarPostService {
       },
       fieldMapping: {
         priceField: 'price',
-        mileageField: 'mileage',
         brandIdField: 'car.brandId',
         categoryIdField: 'car.categoryId',
       },
-      ...params, // Pass other params dynamically
+      ...params, // Pass other params including modelName and vendorName
     });
-
+  
     result.items = result.items.map((item) => ({
       id: item.id,
       basePrice: item.price,
       year: item.year,
       mileage: item.mileage,
-      favorite : item.favoriteCount,
+      favorite: item.favoriteCount,
       vendor: {
         name: item.vendor.name,
-        address : item.vendor.address,
-        // รวม path และ name ของรูปโปรไฟล์เป็น string เดียว
-        profile: item.vendor.users
-          .map((user) => `${user.profilePicturePath}${user.profilePictureName}`)
-          .join(''), // ใช้ join('') เพื่อรวมเป็น string เดียว
+        address: item.vendor.address,
+        profile:
+          item.vendor.users.length > 0
+            ? `${item.vendor.users[0].profilePicturePath}${item.vendor.users[0].profilePictureName}`
+            : null,
       },
       category: item.car?.Category?.name || null,
       brand: item.car?.Brand?.name || null,
+      model: item.car?.Model?.name || null, // เพิ่ม model name ในผลลัพธ์
       pictures: item.pictures.map(
-        (picture) => `${picture.picturePath}${picture.pictureName}`,
+        (picture) => `${picture.picturePath}${picture.pictureName}`
       ),
     }));
-
+  
     return result.items;
   }
   async getCarPostById(id: string) {
@@ -283,7 +289,7 @@ export class CarPostService {
         },
       },
     });
-    console.log(carPosts[0].price);
+   
 
     // สุ่มและเลือกจำนวนรถที่ต้องการ
     const randomCars = carPosts

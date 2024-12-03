@@ -275,6 +275,8 @@ export class CarPostController {
   @ApiQuery({ name: 'mileageMax', required: false, type: String })
   @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
+  @ApiQuery({ name: 'modelName', required: false, type: String }) // เพิ่ม modelName
+  @ApiQuery({ name: 'vendorName', required: false, type: String }) // เพิ่ม vendorName
   async getCarPosts(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
@@ -286,19 +288,23 @@ export class CarPostController {
     @Query('mileageMax') mileageMax?: string,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+    @Query('modelName') modelName?: string, // เพิ่ม modelName
+    @Query('vendorName') vendorName?: string, // เพิ่ม vendorName
   ) {
     try {
       const result = await this.carPostService.getCarPosts({
-        page: page ? parseInt(page, 10) : null, // แปลงเป็น number
-        pageSize: pageSize ? parseInt(pageSize, 10) : null, // แปลงเป็น number
-        brandId: brandId ? parseInt(brandId, 10) : null, // แปลงเป็น number
-        categoryId: categoryId ? parseInt(categoryId, 10) : null, // แปลงเป็น number
-        priceMin: priceMin ? parseFloat(priceMin) : null, // แปลงเป็น float (กรณีใช้ทศนิยม)
-        priceMax: priceMax ? parseFloat(priceMax) : null, // แปลงเป็น float (กรณีใช้ทศนิยม)
-        mileageMin: mileageMin ? parseInt(mileageMin, 10) : null, // แปลงเป็น number
-        mileageMax: mileageMax ? parseInt(mileageMax, 10) : null, // แปลงเป็น number
+        page: page ? parseInt(page, 10) : null,
+        pageSize: pageSize ? parseInt(pageSize, 10) : null,
+        brandId: brandId ? parseInt(brandId, 10) : null,
+        categoryId: categoryId ? parseInt(categoryId, 10) : null,
+        priceMin: priceMin ? parseFloat(priceMin) : null,
+        priceMax: priceMax ? parseFloat(priceMax) : null,
+        mileageMin: mileageMin ? parseInt(mileageMin, 10) : null,
+        mileageMax: mileageMax ? parseInt(mileageMax, 10) : null,
         sortBy,
         sortOrder,
+        modelName: modelName || null, // ส่ง modelName ไป
+        vendorName: vendorName || null, // ส่ง vendorName ไป
       });
       return result;
     } catch (error) {
