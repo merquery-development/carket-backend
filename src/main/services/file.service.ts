@@ -112,78 +112,118 @@ export class FileUploadService {
 
     return carPictures;
   }
-  async uploadCategoryLogo(id: number, logo: Express.Multer.File) {
+  async uploadCategoryLogos(
+    id: number,
+    files: { logo?: Express.Multer.File; logoActive?: Express.Multer.File },
+  ) {
+ 
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'svg', 'svg+xml'];
     const maxSizeInBytes = 500 * 1024; // 500KB
-
-    // ตรวจสอบประเภทไฟล์และขนาด
-    let logoExtension = logo.mimetype.split('/')[1].toLowerCase();
-    if (logoExtension === 'svg+xml') {
-      logoExtension = 'svg'; // Normalize for consistent handling
-    }
-
-    if (
-      logo.size > maxSizeInBytes ||
-      !allowedExtensions.includes(logoExtension)
-    ) {
-      throw new HttpException('Invalid logo file', HttpStatus.BAD_REQUEST);
-    }
-
-
-    const logoOriginalname = logo.originalname.split('.')[0].toLowerCase();
     const folderPath = 'logos/category';
-    const logoName = `${logoOriginalname}.${logoExtension}`;
-    const logoKey = `${folderPath}/${logoName}`;
+    const folderPathActive = 'logos/category/active';
     const envUrl = process.env.S3_PUBLIC_URL || 'https://your-r2-public-url';
-    const logoUrl = `${envUrl}/${logoKey}`;
-   
-    try {
-      // อัปโหลดโลโก้ไปยัง S3
-   await this.s3.send(
+  
+    const uploadLogo = async (file: Express.Multer.File, logoKey: string) => {
+      let logoExtension = file.mimetype.split('/')[1].toLowerCase();
+ 
+  
+      if (file.size > maxSizeInBytes || !allowedExtensions.includes(logoExtension)) {
+        throw new HttpException('Invalid logo file', HttpStatus.BAD_REQUEST);
+      }
+;
+    
+      await this.s3.send(
         new PutObjectCommand({
           Bucket: process.env.BUCKET,
           Key: logoKey,
-          Body: logo.buffer,
+          Body: file.buffer,
           ContentType: 'image/svg+xml', // กำหนดให้ SVG แสดงผลได้ในเบราว์เซอร์
-          ContentDisposition: 'inline', // บังคับให้แสดงผลในเบราว์เซอร์
-
+          ContentDisposition: 'inline',
         }),
       );
-
-      // ดึงข้อมูลหมวดหมู่รถ
-      const category = await this.carService.getCategoryByCarId(id);
-      if(category){
-      if (category.logoName) {
-        // ลบโลโก้เดิมออกจาก S3
-        const oldLogoKey = `${folderPath}/${category.logoName}`;
-        try {
+    };
+  
+    try {
+      const category = await this.carService.getCategoryById(id);
+  
+      let normalLogoUrl: string | null = null;
+      let activeLogoUrl: string | null = null;
+  
+    
+      if (files.logo) {
+        let logoExtension = files.logo.mimetype.split('/')[1].toLowerCase();
+        if (logoExtension === 'svg+xml') {
+          logoExtension = 'svg'; // Normalize for consistent handling
+        }
+        const normalLogoName = `${files.logo.originalname.split('.')[0].toLowerCase()}.${
+         logoExtension
+        }`;
+        const normalLogoKey = `${folderPath}/${normalLogoName}`;
+        normalLogoUrl = `${envUrl}/${normalLogoKey}`;
+        await uploadLogo(files.logo, normalLogoKey);
+  
+        if (category?.logoName) {
+    
+          const oldNormalLogoKey = `${folderPath}/${category.logoName}`;
           await this.s3.send(
             new DeleteObjectCommand({
               Bucket: process.env.BUCKET,
-              Key: oldLogoKey,
+              Key: oldNormalLogoKey,
             }),
           );
-        } catch (deleteError) {
-          console.warn(`Failed to delete old logo: ${deleteError.message}`);
         }
+     
+      
       }
-    }
-      // อัปเดตโลโก้ในฐานข้อมูล
-      await this.carService.updateCategoryLogo(
-        id,
-        `/${logoName}`,
-        `/${folderPath}`,
-      );
-    
+  
+ 
+      if (files.logoActive) {
+        let logoExtension = files.logoActive.mimetype.split('/')[1].toLowerCase();
+        if (logoExtension === 'svg+xml') {
+          logoExtension = 'svg'; // Normalize for consistent handling
+        }
+        const activeLogoName = `${files.logoActive.originalname.split('.')[0].toLowerCase()}.${
+          logoExtension
+        }`;
+        const activeLogoKey = `${folderPathActive}/${activeLogoName}`;
+        activeLogoUrl = `${envUrl}/${activeLogoKey}`;
+        await uploadLogo(files.logoActive, activeLogoKey);
 
-      return { message: logoUrl };
+  
+        if (category?.logoNameActive) {
+       
+          const oldActiveLogoKey = `${folderPathActive}/${category.logoNameActive}`;
+          await this.s3.send(
+            new DeleteObjectCommand({
+              Bucket: process.env.BUCKET,
+              Key: oldActiveLogoKey,
+            }),
+          );
+        }
+      
+      
+
+      
+ 
+      await this.carService.updateCategoryLogo(id, {
+        logoName: normalLogoUrl ? `/${files.logo.originalname.split('.')[0].toLowerCase()}` : category.logoName,
+        logoPath: normalLogoUrl ? `/${folderPath}` : category.logoPath,
+        logoNameActive: activeLogoUrl ? `/${activeLogoName}`: category.logoNameActive,
+        logoPathActive: activeLogoUrl ? `/${folderPathActive}` : category.logoPathActive,
+      });
+    }
+      return {
+        ...(normalLogoUrl && { normalLogoUrl }),
+        ...(activeLogoUrl && { activeLogoUrl }),
+      };
     } catch (error) {
       throw new HttpException(
-        `File upload failed: ${error}`,
+        `File upload failed: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
+  
 
   async uploadBrandLogo(
     id: number,

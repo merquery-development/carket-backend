@@ -142,6 +142,19 @@ export class CarService {
     }
   }
 
+  async getCategoryById(id: number) {
+    try {
+      const result = await this.prisma.category.findFirst({
+        where: {
+           id,
+        
+        },
+      });
+      return result;
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
   async updateBrandLogo(
     brandId: number,
     logoName: string,
@@ -162,15 +175,27 @@ export class CarService {
 
   async updateCategoryLogo(
     categoryId: number,
-    logoName: string,
-    logoPath: string,
+    logos: {
+      logoName?: string;
+      logoPath?: string;
+      logoNameActive?: string;
+      logoPathActive?: string;
+    },
   ) {
+    // ตรวจสอบว่าหมวดหมู่มีอยู่หรือไม่
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+  
+    if (!category) {
+      throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
+    }
+  
+    // อัปเดตข้อมูลโลโก้ตามฟิลด์ที่ส่งมา
     await this.prisma.category.update({
       where: { id: categoryId },
       data: {
-        logoName: logoName,
-
-        logoPath: logoPath,
+        ...logos, // ใช้ Object Spread สำหรับอัปเดตเฉพาะฟิลด์ที่ส่งมา
       },
     });
   }

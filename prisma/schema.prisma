@@ -196,6 +196,8 @@ model Category {
   id        Int      @id @default(autoincrement())
   logoName  String?  @map("logo_name")
   logoPath  String?  @map("logo_path")
+  logoNameActive  String?  @map("logo_name_active")
+  logoPathActive  String?  @map("logo_path_active")
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   cars      Car[]

@@ -23,17 +23,17 @@ import { UploadBrandDto, UploadCategoryDto } from '../../utils/dto/car.dto';
 @Controller('upload')
 export class FileUploadController {
   constructor(private readonly fileUploadService: FileUploadService) {}
-
   @Post('category-logo')
-  @ApiOperation({ summary: 'Upload normal and active logos for category' })
+  @ApiOperation({ summary: 'Upload normal and/or active logos for category' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Upload logos for category',
     schema: {
       type: 'object',
       properties: {
-        logo: { type: 'string', format: 'binary' }, // โลโก้ธรรมดา
         id: { type: 'integer' }, // ID ของหมวดหมู่
+        logo: { type: 'string', format: 'binary' }, // โลโก้ธรรมดา
+        logoActive: { type: 'string', format: 'binary' }, // โลโก้สำหรับ Active State
       },
     },
   })
@@ -49,22 +49,23 @@ export class FileUploadController {
     @UploadedFiles() files: Array<Express.Multer.File>, // รับไฟล์ทั้งหมด
   ) {
     try {
-      // ตรวจสอบว่าได้รับไฟล์โลโก้หรือไม่
+      // แยกไฟล์ `logo` และ `logoActive`
       const logo = files.find((file) => file.fieldname === 'logo'); // โลโก้ธรรมดา
-
-      if (!logo) {
+      const logoActive = files.find((file) => file.fieldname === 'logoActive'); // โลโก้สำหรับ Active State
+  
+      if (!logo && !logoActive) {
         throw new HttpException(
-          'Both logo and logoActive files are required',
+          'At least one of logo or logoActive must be provided',
           HttpStatus.BAD_REQUEST,
         );
       }
-
-      // เรียกใช้ service เพื่ออัปโหลดโลโก้
-      const result = await this.fileUploadService.uploadCategoryLogo(
+  
+      // ส่งไฟล์ไปยัง Service
+      const result = await this.fileUploadService.uploadCategoryLogos(
         Number(body.id),
-        logo,
+        { logo, logoActive },
       );
-
+  
       return result;
     } catch (error) {
       throw new HttpException(
