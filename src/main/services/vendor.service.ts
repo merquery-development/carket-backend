@@ -30,30 +30,30 @@ export class VendorService {
     return await bcrypt.hash(password, saltRounds);
   }
 
-  async getVendorByuid(uid: string) {
-    const result = await this.prisma.vendor.findFirst({
-      where: {
-        uid: uid,
-      },
-      include: {
-        banners: true, // Include related banners
-      },
-    });
-  
-    if (!result) {
-      throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);
-    }
-  
-    // Modify banners to combine `imagePath` and `imageName`
-    const modifiedResult = {
-      ...result,
-      banners: result.banners.map(banner => ({
-        imageUrl: banner.imagePath + banner.imageName, // Combine imagePath and imageName
-      })),
-    };
-  
-    return modifiedResult;
+async getVendorByuid(uid: string) {
+  const result = await this.prisma.vendor.findFirst({
+    where: {
+      uid: uid,
+    },
+    include: {
+      banners: true, // Include related banners
+    },
+  });
+
+  if (!result) {
+    throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);
   }
+
+  // Modify banners to combine `imagePath` and `imageName`
+  const modifiedResult = {
+    ...result,
+    banners: result.banners.map(banner => ({
+      imageUrl: banner.imagePath + banner.imageName, // Combine imagePath and imageName
+    })),
+  };
+
+  return modifiedResult;
+}
   async getVendors({
     page = null,
     pageSize = null,
@@ -361,9 +361,12 @@ export class VendorService {
   }
   async updateVendorBanner(
     vendorId: number,
-    pictureName: string,
     picturePath: string,
+    pictureName: string,
   ) {
+
+
+    
     await this.prisma.vendorBanner.create({
       data: {
         vendorId,
