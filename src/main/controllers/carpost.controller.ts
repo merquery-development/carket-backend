@@ -331,8 +331,8 @@ export class CarPostController {
       );
     }
   }
-  // @CacheKey('custom_key')
-  // @CacheTTL(24 * 60 * 60 * 1000) //millisecond
+  @CacheKey('bar')
+  @CacheTTL(24 * 60 * 60 * 1000) //millisecond
   @Get('bar')
   @ApiResponse({
     status: 200,
@@ -341,7 +341,8 @@ export class CarPostController {
   async getBar() {
     return await this.carPostService.getCarBar();
   }
-
+  @CacheKey('bar-mile')
+  @CacheTTL(24 * 60 * 60 * 1000) //millisecond
   @Get('bar-mileage')
   @ApiResponse({
     status: 200,
