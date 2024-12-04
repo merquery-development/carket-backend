@@ -48,7 +48,7 @@ export class VendorController {
     return this.vendorService.getVendorByuid(uid);
   }
   @ApiOperation({ summary: 'Retrieve vendoruser by uid' })
-  @Get('user/uid/:uid')
+  // @Get('user/uid/:uid')
   getVendorUserByUId(@Param('uid') uid: string) {
     return this.vendorService.getVendorUserByuid(uid);
   }
@@ -115,7 +115,7 @@ export class VendorController {
     });
   }
 
-  @Get('user')
+  // @Get('user')
   @HttpCode(200)
   @ApiOperation({ summary: 'Get All Data of vendoruser ' })
   @ApiOkResponse({
