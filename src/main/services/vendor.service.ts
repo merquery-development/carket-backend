@@ -44,13 +44,13 @@ async getVendorByuid(uid: string) {
     throw new HttpException('vendor not found', HttpStatus.NOT_FOUND);
   }
 
+    // Modify banners to be an array of strings
+    const modifiedResult = {
+      ...result,
+      banners: result.banners.map(banner => banner.imagePath + banner.imageName), // แปลงให้เหลือเฉพาะ URL เป็น string
+    };
   // Modify banners to combine `imagePath` and `imageName`
-  const modifiedResult = {
-    ...result,
-    banners: result.banners.map(banner => ({
-      imageUrl: banner.imagePath + banner.imageName, // Combine imagePath and imageName
-    })),
-  };
+
 
   return modifiedResult;
 }
@@ -97,14 +97,11 @@ async getVendorByuid(uid: string) {
       }),
     ]);
   
-    // Modify banners to combine `imagePath` and `imageName`
+  
     const modifiedVendors = vendor.map(v => ({
       ...v,
-      banners: v.banners.map(banner => ({
-        imageUrl: banner.imagePath + banner.imageName, // Combine imagePath and imageName
-      })),
+      banners: v.banners.map(banner => banner.imagePath + banner.imageName), // แปลง banner ให้เหลือเฉพาะ imageUrl เดิม
     }));
-  
     try {
       const data = {
         vendor: modifiedVendors,
