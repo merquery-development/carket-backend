@@ -331,8 +331,8 @@ export class CarPostController {
       );
     }
   }
-  @CacheKey('custom_key')
-  @CacheTTL(24 * 60 * 60 * 1000) //millisecond
+  // @CacheKey('custom_key')
+  // @CacheTTL(24 * 60 * 60 * 1000) //millisecond
   @Get('bar')
   @ApiResponse({
     status: 200,
@@ -341,6 +341,16 @@ export class CarPostController {
   async getBar() {
     return await this.carPostService.getCarBar();
   }
+
+  @Get('bar-mileage')
+  @ApiResponse({
+    status: 200,
+    description: 'Returns an array of car counts per price range',
+  })
+  async getBarByMile() {
+    return await this.carPostService.getCarBarByMileage();
+  }
+
 
   @Get('carpost/:postUid')
   async getCarPostByUid(@Param('postUid') postUid: string) {

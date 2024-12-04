@@ -189,13 +189,13 @@ export class CarPostService {
     // Step 2: Check if data is available
     if (!maxPrice._max.price || !minPrice._min.price) {
       throw new Error('ไม่พบข้อมูลราคาที่สามารถคำนวณได้');
-    }const maxPriceValue = maxPrice._max.price.toNumber();
+    }
+    const maxPriceValue = maxPrice._max.price.toNumber();
     const minPriceValue = minPrice._min.price.toNumber();
-    
+
     // คำนวณ barCount สำหรับ all-class
     const allClassRange = maxPriceValue - minPriceValue;
     const barCount = allClassRange > 0 ? Math.ceil(allClassRange / 50000) : 1; // ใช้ 1 bar หากช่วงราคาน้อยเกินไป
-    
 
     // Define class ranges
     const classes = [
@@ -254,6 +254,90 @@ export class CarPostService {
 
     return result;
   }
+  async getCarBarByMileage() {
+    // Step 1: Retrieve max and min mileage
+    const maxMileage = await this.prisma.carPost.aggregate({
+      _max: { mileage: true },
+    });
+    const minMileage = await this.prisma.carPost.aggregate({
+      _min: { mileage: true },
+    });
+  
+    // Step 2: Check if data is available
+    if (!maxMileage._max.mileage || !minMileage._min.mileage) {
+      throw new Error('ไม่พบข้อมูลระยะไมล์ที่สามารถคำนวณได้');
+    }
+  
+    // Convert BigInt to number if necessary
+    const maxMileageValue = typeof maxMileage._max.mileage === 'bigint' 
+      ? Number(maxMileage._max.mileage) 
+      : maxMileage._max.mileage;
+  
+    const minMileageValue = typeof minMileage._min.mileage === 'bigint' 
+      ? Number(minMileage._min.mileage) 
+      : minMileage._min.mileage;
+  
+    // Calculate barCount for all-class
+    const allClassRange = maxMileageValue - minMileageValue;
+    const barCount = allClassRange > 0 ? Math.ceil(allClassRange / 5000) : 1;
+  
+    // Define mileage ranges for each class
+    const classes = [
+      { name: 'low-mileage', min: 0, max: 50000, range: 5000 },
+      { name: 'mid-mileage', min: 50001, max: 150000, range: 10000 },
+      { name: 'high-mileage', min: 150001, max: 300000, range: 10000 },
+      {
+        name: 'all-mileage',
+        min: minMileageValue,
+        max: maxMileageValue,
+        range: 5000,
+        barCount,
+      },
+    ];
+  
+    // Result to hold bars data for each class
+    const result = {};
+  
+    // Step 3: Calculate bars for each class
+    for (const classInfo of classes) {
+      const { name, min, max, range } = classInfo;
+      const barCount = Math.ceil((max - min) / range);
+      const barRange = range;
+  
+      // Initialize array to store car count in each bar
+      const barArray: number[] = new Array(barCount).fill(0);
+  
+      // Step 4: Populate car counts in each bar
+      for (let i = 0; i < barCount; i++) {
+        const lowerBound = min + i * barRange;
+        const upperBound = i === barCount - 1 ? max : lowerBound + barRange;
+  
+        // Count cars within the current range
+        const carCountInRange = await this.prisma.carPost.count({
+          where: {
+            mileage: {
+              gte: lowerBound,
+              [i === barCount - 1 ? 'lte' : 'lt']: upperBound,
+            },
+          },
+        });
+  
+        barArray[i] = carCountInRange;
+      }
+  
+      // Store class data in the result
+      result[name] = {
+        barCount,
+        barRange,
+        minMileage: min,
+        maxMileage: max,
+        bars: barArray,
+      };
+    }
+  
+    return result;
+  }
+  
   async getRecommendedCars(amount: number) {
     const carPosts = await this.prisma.carPost.findMany({
       select: {
