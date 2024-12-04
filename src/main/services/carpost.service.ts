@@ -190,25 +190,19 @@ export class CarPostService {
     if (!maxPrice._max.price || !minPrice._min.price) {
       throw new Error('ไม่พบข้อมูลราคาที่สามารถคำนวณได้');
     }
-    const maxPriceValue = maxPrice._max.price.toNumber();
-    const minPriceValue = minPrice._min.price.toNumber();
-
-    // คำนวณ barCount สำหรับ all-class
-    const allClassRange = maxPriceValue - minPriceValue;
-    const barCount = allClassRange > 0 ? Math.ceil(allClassRange / 50000) : 1; // ใช้ 1 bar หากช่วงราคาน้อยเกินไป
-
+   
     // Define class ranges
     const classes = [
-      { name: 'eco-class', min: 0, max: 1000000, range: 10000 },
-      { name: 'mid-class', min: 1000000, max: 3000000, range: 50000 },
-      { name: 'high-class', min: 3000000, max: 5000000, range: 50000 },
+      { name: 'eco-class', min: 1, max: 1000000, range: 10000 },
+      { name: 'mid-class', min: 1000001, max: 3000000, range: 50000 },
+      { name: 'high-class', min: 3000001, max: 5000000, range: 50000 },
       {
         name: 'all-class',
         min: minPrice._min.price.toNumber(),
         max: maxPrice._max.price.toNumber(),
         range: 50000,
 
-        barCount, // กำหนด barCount จากการคำนวณที่ปรับแล้ว
+      
       },
     ];
 
@@ -218,7 +212,7 @@ export class CarPostService {
     // Step 3: Calculate bars for each class
     for (const classInfo of classes) {
       const { name, min, max, range } = classInfo;
-      const barCount = Math.ceil((max - min) / range);
+      const barCount = Math.ceil((max - min+1) / range);
       const barRange = range;
 
       // Initialize array to store car count in each bar
@@ -227,14 +221,14 @@ export class CarPostService {
       // Step 4: Populate car counts in each bar
       for (let i = 0; i < barCount; i++) {
         const lowerBound = min + i * barRange;
-        const upperBound = i === barCount - 1 ? max : lowerBound + barRange;
+        const upperBound = i === barCount - 1 ? max : lowerBound + barRange-1
 
         // Count cars within the current range
         const carCountInRange = await this.prisma.carPost.count({
           where: {
             price: {
               gte: lowerBound,
-              [i === barCount - 1 ? 'lte' : 'lt']: upperBound,
+              lte: upperBound
             },
           },
         });
@@ -269,12 +263,12 @@ export class CarPostService {
     }
   
     // Convert BigInt to number if necessary
-    const maxMileageValue = typeof maxMileage._max.mileage === 'bigint' 
-      ? Number(maxMileage._max.mileage) 
+    const maxMileageValue = typeof maxMileage._max.mileage === 'bigint'
+      ? Number(maxMileage._max.mileage)
       : maxMileage._max.mileage;
   
-    const minMileageValue = typeof minMileage._min.mileage === 'bigint' 
-      ? Number(minMileage._min.mileage) 
+    const minMileageValue = typeof minMileage._min.mileage === 'bigint'
+      ? Number(minMileage._min.mileage)
       : minMileage._min.mileage;
   
     // Calculate barCount for all-class
@@ -283,12 +277,12 @@ export class CarPostService {
   
     // Define mileage ranges for each class
     const classes = [
-      { name: 'low-mileage', min: 0, max: 50000, range: 5000 },
+      { name: 'low-mileage', min: 1, max: 50000, range: 5000 },
       { name: 'mid-mileage', min: 50001, max: 150000, range: 10000 },
       { name: 'high-mileage', min: 150001, max: 300000, range: 10000 },
       {
         name: 'all-mileage',
-        min: minMileageValue,
+        min: 1, // แก้ให้เริ่มที่ 1
         max: maxMileageValue,
         range: 5000,
         barCount,
@@ -301,7 +295,7 @@ export class CarPostService {
     // Step 3: Calculate bars for each class
     for (const classInfo of classes) {
       const { name, min, max, range } = classInfo;
-      const barCount = Math.ceil((max - min) / range);
+      const barCount = Math.ceil((max - min + 1) / range); // +1 เพื่อรวมค่า max
       const barRange = range;
   
       // Initialize array to store car count in each bar
@@ -310,14 +304,14 @@ export class CarPostService {
       // Step 4: Populate car counts in each bar
       for (let i = 0; i < barCount; i++) {
         const lowerBound = min + i * barRange;
-        const upperBound = i === barCount - 1 ? max : lowerBound + barRange;
+        const upperBound = i === barCount - 1 ? max : lowerBound + barRange - 1; // -1 เพื่อป้องกันการซ้อนกัน
   
         // Count cars within the current range
         const carCountInRange = await this.prisma.carPost.count({
           where: {
             mileage: {
               gte: lowerBound,
-              [i === barCount - 1 ? 'lte' : 'lt']: upperBound,
+              lte: upperBound, // ใช้ lte เพื่อให้รวมค่า upperBound
             },
           },
         });
