@@ -341,6 +341,7 @@ export class CarPostController {
   async getBar() {
     return await this.carPostService.getCarBar();
   }
+  
   @CacheKey('bar-mile')
   @CacheTTL(24 * 60 * 60 * 1000) //millisecond
   @Get('bar-mileage')

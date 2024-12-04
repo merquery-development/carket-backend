@@ -193,11 +193,11 @@ export class CarPostService {
    
     // Define class ranges
     const classes = [
-      { name: 'eco-class', min: 1, max: 1000000, range: 10000 },
-      { name: 'mid-class', min: 1000001, max: 3000000, range: 50000 },
-      { name: 'high-class', min: 3000001, max: 5000000, range: 50000 },
+      { name: 'ecoClass', min: 1, max: 1000000, range: 10000 },
+      { name: 'midClass', min: 1000001, max: 3000000, range: 50000 },
+      { name: 'highClass', min: 3000001, max: 5000000, range: 50000 },
       {
-        name: 'all-class',
+        name: 'allClass',
         min: minPrice._min.price.toNumber(),
         max: maxPrice._max.price.toNumber(),
         range: 50000,
@@ -277,11 +277,11 @@ export class CarPostService {
   
     // Define mileage ranges for each class
     const classes = [
-      { name: 'low-mileage', min: 1, max: 50000, range: 5000 },
-      { name: 'mid-mileage', min: 50001, max: 150000, range: 10000 },
-      { name: 'high-mileage', min: 150001, max: 300000, range: 10000 },
+      { name: 'lowMileage', min: 1, max: 50000, range: 5000 },
+      { name: 'midMileage', min: 50001, max: 150000, range: 10000 },
+      { name: 'highMileage', min: 150001, max: 300000, range: 10000 },
       {
-        name: 'all-mileage',
+        name: 'allMileage',
         min: 1, // แก้ให้เริ่มที่ 1
         max: maxMileageValue,
         range: 5000,
