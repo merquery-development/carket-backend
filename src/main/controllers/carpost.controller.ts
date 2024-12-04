@@ -346,7 +346,7 @@ export class CarPostController {
   @Get('bar-mileage')
   @ApiResponse({
     status: 200,
-    description: 'Returns an array of car counts per price range',
+    description: 'Returns an array of car counts per mile range',
   })
   async getBarByMile() {
     return await this.carPostService.getCarBarByMileage();
