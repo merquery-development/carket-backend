@@ -267,8 +267,8 @@ export class CarPostController {
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiQuery({ name: 'page', required: false, type: String })
   @ApiQuery({ name: 'pageSize', required: false, type: String })
-  @ApiQuery({ name: 'brandId', required: false, type: String })
-  @ApiQuery({ name: 'categoryId', required: false, type: String })
+  @ApiQuery({ name: 'brandId', required: false, type: [String], isArray: true }) // รองรับ array
+  @ApiQuery({ name: 'categoryId', required: false, type: [String], isArray: true }) // รองรับ array
   @ApiQuery({ name: 'priceMin', required: false, type: String })
   @ApiQuery({ name: 'priceMax', required: false, type: String })
   @ApiQuery({ name: 'mileageMin', required: false, type: String })
@@ -280,8 +280,8 @@ export class CarPostController {
   async getCarPosts(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
-    @Query('brandId') brandId?: string,
-    @Query('categoryId') categoryId?: string,
+    @Query('brandId') brandId?: string[], // เปลี่ยนเป็น array
+    @Query('categoryId') categoryId?: string[], // เปลี่ยนเป็น array
     @Query('priceMin') priceMin?: string,
     @Query('priceMax') priceMax?: string,
     @Query('mileageMin') mileageMin?: string,
@@ -295,8 +295,8 @@ export class CarPostController {
       const result = await this.carPostService.getCarPosts({
         page: page ? parseInt(page, 10) : null,
         pageSize: pageSize ? parseInt(pageSize, 10) : null,
-        brandId: brandId ? parseInt(brandId, 10) : null,
-        categoryId: categoryId ? parseInt(categoryId, 10) : null,
+        brandId: brandId ? brandId.map(id => parseInt(id, 10)) : null, // แปลงเป็น array ของตัวเลข
+        categoryId: categoryId ? categoryId.map(id => parseInt(id, 10)) : null, // แปลงเป็น array ของตัวเลข
         priceMin: priceMin ? parseFloat(priceMin) : null,
         priceMax: priceMax ? parseFloat(priceMax) : null,
         mileageMin: mileageMin ? parseInt(mileageMin, 10) : null,
