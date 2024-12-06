@@ -96,8 +96,22 @@ export class CarPostService {
   }
 
   async getCarPosts(params) {
-    try {
-    } catch (error) {}
+    const {
+      page,
+      pageSize,
+      brandId,
+      categoryId,
+      priceMin,
+      priceMax,
+      modelName,
+      vendorName,
+      sortBy,
+      sortOrder,
+    } = params;
+  
+    const pageNumber = page ? parseInt(page, 10) : 1;
+    const pageLimit = pageSize ? parseInt(pageSize, 10) : 10;
+  
     const result = await getCarsAndStats({
       prismaModel: this.prisma.carPost,
       customSelect: {
@@ -110,7 +124,7 @@ export class CarPostService {
           select: {
             Brand: { select: { name: true } },
             Category: { select: { name: true } },
-            Model: { select: { name: true } }, // เพิ่ม Model Name
+            Model: { select: { name: true } },
           },
         },
         vendor: {
@@ -138,10 +152,20 @@ export class CarPostService {
         brandIdField: 'car.brandId',
         categoryIdField: 'car.categoryId',
       },
-      ...params, // Pass other params including modelName and vendorName
+      page: pageNumber,
+      pageSize: pageLimit,
+      brandId: brandId ? brandId.map((id) => parseInt(id, 10)) : [],
+      categoryId: categoryId ? categoryId.map((id) => parseInt(id, 10)) : [],
+      priceMin: priceMin ? parseFloat(priceMin) : null,
+      priceMax: priceMax ? parseFloat(priceMax) : null,
+      modelName,
+      vendorName,
+      sortBy,
+      sortOrder,
     });
-
-    result.items = result.items.map((item) => ({
+  
+    // Map ข้อมูลผลลัพธ์
+     result.items = result.items.map((item) => ({
       id: item.id,
       basePrice: item.price,
       year: item.year,
@@ -157,14 +181,15 @@ export class CarPostService {
       },
       category: item.car?.Category?.name || null,
       brand: item.car?.Brand?.name || null,
-      model: item.car?.Model?.name || null, // เพิ่ม model name ในผลลัพธ์
+      model: item.car?.Model?.name || null,
       pictures: item.pictures.map(
         (picture) => `${picture.picturePath}${picture.pictureName}`,
       ),
     }));
-
-    return result.items;
+  
+    return result;
   }
+
   async getCarPostById(id: string) {
     try {
       const result = this.prisma.carPost.findFirst({
@@ -190,7 +215,7 @@ export class CarPostService {
     if (!maxPrice._max.price || !minPrice._min.price) {
       throw new Error('ไม่พบข้อมูลราคาที่สามารถคำนวณได้');
     }
-   
+
     // Define class ranges
     const classes = [
       { name: 'ecoClass', min: 1, max: 1000000, range: 10000 },
@@ -201,8 +226,6 @@ export class CarPostService {
         min: minPrice._min.price.toNumber(),
         max: maxPrice._max.price.toNumber(),
         range: 50000,
-
-      
       },
     ];
 
@@ -212,7 +235,7 @@ export class CarPostService {
     // Step 3: Calculate bars for each class
     for (const classInfo of classes) {
       const { name, min, max, range } = classInfo;
-      const barCount = Math.ceil((max - min+1) / range);
+      const barCount = Math.ceil((max - min + 1) / range);
       const barRange = range;
 
       // Initialize array to store car count in each bar
@@ -221,14 +244,14 @@ export class CarPostService {
       // Step 4: Populate car counts in each bar
       for (let i = 0; i < barCount; i++) {
         const lowerBound = min + i * barRange;
-        const upperBound = i === barCount - 1 ? max : lowerBound + barRange-1
+        const upperBound = i === barCount - 1 ? max : lowerBound + barRange - 1;
 
         // Count cars within the current range
         const carCountInRange = await this.prisma.carPost.count({
           where: {
             price: {
               gte: lowerBound,
-              lte: upperBound
+              lte: upperBound,
             },
           },
         });
@@ -256,25 +279,27 @@ export class CarPostService {
     const minMileage = await this.prisma.carPost.aggregate({
       _min: { mileage: true },
     });
-  
+
     // Step 2: Check if data is available
     if (!maxMileage._max.mileage || !minMileage._min.mileage) {
       throw new Error('ไม่พบข้อมูลระยะไมล์ที่สามารถคำนวณได้');
     }
-  
+
     // Convert BigInt to number if necessary
-    const maxMileageValue = typeof maxMileage._max.mileage === 'bigint'
-      ? Number(maxMileage._max.mileage)
-      : maxMileage._max.mileage;
-  
-    const minMileageValue = typeof minMileage._min.mileage === 'bigint'
-      ? Number(minMileage._min.mileage)
-      : minMileage._min.mileage;
-  
+    const maxMileageValue =
+      typeof maxMileage._max.mileage === 'bigint'
+        ? Number(maxMileage._max.mileage)
+        : maxMileage._max.mileage;
+
+    const minMileageValue =
+      typeof minMileage._min.mileage === 'bigint'
+        ? Number(minMileage._min.mileage)
+        : minMileage._min.mileage;
+
     // Calculate barCount for all-class
     const allClassRange = maxMileageValue - minMileageValue;
     const barCount = allClassRange > 0 ? Math.ceil(allClassRange / 5000) : 1;
-  
+
     // Define mileage ranges for each class
     const classes = [
       { name: 'lowMileage', min: 1, max: 50000, range: 5000 },
@@ -288,24 +313,24 @@ export class CarPostService {
         barCount,
       },
     ];
-  
+
     // Result to hold bars data for each class
     const result = {};
-  
+
     // Step 3: Calculate bars for each class
     for (const classInfo of classes) {
       const { name, min, max, range } = classInfo;
       const barCount = Math.ceil((max - min + 1) / range); // +1 เพื่อรวมค่า max
       const barRange = range;
-  
+
       // Initialize array to store car count in each bar
       const barArray: number[] = new Array(barCount).fill(0);
-  
+
       // Step 4: Populate car counts in each bar
       for (let i = 0; i < barCount; i++) {
         const lowerBound = min + i * barRange;
         const upperBound = i === barCount - 1 ? max : lowerBound + barRange - 1; // -1 เพื่อป้องกันการซ้อนกัน
-  
+
         // Count cars within the current range
         const carCountInRange = await this.prisma.carPost.count({
           where: {
@@ -315,10 +340,10 @@ export class CarPostService {
             },
           },
         });
-  
+
         barArray[i] = carCountInRange;
       }
-  
+
       // Store class data in the result
       result[name] = {
         barCount,
@@ -328,10 +353,10 @@ export class CarPostService {
         bars: barArray,
       };
     }
-  
+
     return result;
   }
-  
+
   async getRecommendedCars(amount: number) {
     const carPosts = await this.prisma.carPost.findMany({
       select: {
