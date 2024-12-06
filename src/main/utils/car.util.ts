@@ -1,57 +1,34 @@
 import { getPagination } from './pagination';
+
 export async function getCarsAndStats({
   prismaModel,
-  page,
-  pageSize,
-  brandId,
-  categoryId,
-  priceMin,
-  priceMax,
-  modelName,
-  vendorName,
-  sortBy,
-  sortOrder,
-  customSelect,
-  fieldMapping,  // เพิ่ม fieldMapping เข้าไป
-}: {
-  prismaModel: any;
-  page?: number | null;
-  pageSize?: number | null;
-  brandId?: number[];
-  categoryId?: number[];
-  priceMin?: number | null;
-  priceMax?: number | null;
-  modelName?: string;
-  vendorName?: string;
-  sortBy?: string;
-  sortOrder?: string;
-  customSelect?: object;
-  fieldMapping?: object;  // ประกาศ fieldMapping
-}){
+  page = null,
+  pageSize = null,
+  brandId = null,
+  categoryId = null,
+  priceMin = null,
+  priceMax = null,
+  modelName = null, // New filter
+  vendorName = null, // New filter
+  sortBy = 'createdAt',
+  sortOrder = 'asc',
+  customSelect = {},
+  fieldMapping = {
+    priceField: 'basePrice',
+    brandIdField: 'brandId',
+    categoryIdField: 'categoryId',
+  },
+}) {
   const { skip, take } = getPagination(page, pageSize);
 
-  // เงื่อนไขการกรอง
+  // กำหนดเงื่อนไขกรองทั่วไป
   const where = {
-    ...(brandId?.length > 0
-      ? {
-          car: {
-            Brand: {
-              id: { in: brandId },
-            },
-          },
-        }
-      : {}),
-    ...(categoryId?.length > 0
-      ? {
-          car: {
-            Category: {
-              id: { in: categoryId },
-            },
-          },
-        }
+    ...(brandId ? { [fieldMapping.brandIdField]: { equals: brandId } } : {}),
+    ...(categoryId
+      ? { [fieldMapping.categoryIdField]: { equals: categoryId } }
       : {}),
     ...(priceMin !== null && priceMax !== null
-      ? { price: { gte: priceMin, lte: priceMax } }
+      ? { [fieldMapping.priceField]: { gte: priceMin, lte: priceMax } }
       : {}),
     ...(modelName
       ? {
@@ -64,7 +41,7 @@ export async function getCarsAndStats({
       : {}),
   };
 
-  // เงื่อนไขสำหรับ vendorName
+  // กรอง vendorName โดยตรงใน CarPost
   const vendorWhere = vendorName
     ? {
         vendor: {
@@ -76,7 +53,7 @@ export async function getCarsAndStats({
   // รวมเงื่อนไขการกรองทั้งหมด
   const finalWhere = { ...where, ...vendorWhere };
 
-  // ดึงข้อมูลจาก Prisma
+  // ค้นหาข้อมูลและคำนวณจำนวน
   const [items, total] = await Promise.all([
     prismaModel.findMany({
       skip,
@@ -87,9 +64,7 @@ export async function getCarsAndStats({
       },
       select: customSelect,
     }),
-    prismaModel.count({
-      where: finalWhere, // ใช้เงื่อนไขเดียวกันสำหรับ count
-    }),
+    prismaModel.count({ where: finalWhere }),
   ]);
 
   return {
