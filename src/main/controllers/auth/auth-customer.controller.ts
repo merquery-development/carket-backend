@@ -47,12 +47,16 @@ export class AuthCustomerController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Login with Google' })
-  async googleAuth(@Req() req) {}
+  async googleAuth(@Req() req) {
+  
+    
+  }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   googleAuthRedirect(@Req() req) {
-
+    const redirectUri = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth-customer/google/callback';
+    console.log(redirectUri);
     return this.authService.googleLogin(req);
   }
   // Facebook login route
