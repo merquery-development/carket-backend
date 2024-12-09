@@ -11,6 +11,8 @@ import {
   Param,
   Post,
   Req,
+  UseGuards,
+  
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -21,18 +23,20 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { AuthService } from '../services/auth.service';
 import { CustomerService } from '../services/customer.service';
 import { CreateCustomerDto } from '../utils/dto/customer.dto';
-import { request } from 'http';
 import { extractTokenFromHeader } from '../utils/token.util';
-import { AuthService } from '../services/auth.service';
+import { GoogleAuthGuard } from '../guards/google.guard';
 @ApiTags('customers')
 @Controller('customers')
 @ApiBearerAuth('defaultBearerAuth')
 export class CustomerController {
-  constructor(private readonly customerService: CustomerService,
+  constructor(
+    private readonly customerService: CustomerService,
     @Inject(forwardRef(() => AuthService))
-  private readonly authService: AuthService,) {}
+    private readonly authService: AuthService,
+  ) {}
 
   @Post('')
   @ApiOperation({ summary: 'Register Customer' })
@@ -43,7 +47,7 @@ export class CustomerController {
   createCustomer(@Body() postData: CreateCustomerDto) {
     return this.customerService.createCustomer(postData);
   }
-
+  // @UseGuards(GoogleAuthGuard)
   @Get('')
   @ApiOperation({ summary: 'List all customer' })
   getAllCustomer() {
@@ -137,11 +141,13 @@ export class CustomerController {
     description: 'Successfully toggled favorite status.',
   })
   @ApiResponse({ status: 400, description: 'Invalid input or bad request.' })
-  async toggleFavorite(@Param('postId') postId: number, @Req() request: Request) {
+  async toggleFavorite(
+    @Param('postId') postId: number,
+    @Req() request: Request,
+  ) {
     const token = extractTokenFromHeader(request);
-    const profile = await this.authService.getProfile(token)
-    
-    
+    const profile = await this.authService.getProfile(token);
+
     return await this.customerService.toggleFavoriteCarPost(
       profile.customeruid,
       Number(postId),

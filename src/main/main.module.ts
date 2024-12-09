@@ -32,6 +32,7 @@ import { FacebookStrategy } from './utils/strategy/facebook.stategy';
 import { GoogleStrategy } from './utils/strategy/google.strategy';
 import { SubscriptionService } from './services/subscription.service';
 import { SubscriptionControllers } from './controllers/subscipt.controller';
+import { GoogleAuthGuard } from './guards/google.guard';
 @Module({
   imports: [
     PassportModule,
@@ -87,7 +88,8 @@ import { SubscriptionControllers } from './controllers/subscipt.controller';
     RoleService,
     AdminGuard,
     EmailVerifiedGuard,
-    SubscriptionService
+    SubscriptionService,
+    
   ],
 })
 export class MainModule {}

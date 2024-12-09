@@ -223,12 +223,14 @@ export class AuthService {
     let customer = await this.customerService.getCustomerByEmail(
       req.user.email,
     );
+  
+    if(customer){
     if (customer.oauthType != 'Google') {
       throw new HttpException(
         'Already signup with other auth',
         HttpStatus.BAD_REQUEST,
       );
-    }
+    }}
     const oauthUserData = req.user || {}; // ข้อมูลจาก OAuth
     const oauthType = 'Google';
     if (!customer) {

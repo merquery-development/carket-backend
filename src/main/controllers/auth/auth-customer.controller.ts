@@ -51,8 +51,8 @@ export class AuthCustomerController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  @ApiOperation({ summary: 'Google Auth Callback' })
   googleAuthRedirect(@Req() req) {
+
     return this.authService.googleLogin(req);
   }
   // Facebook login route
