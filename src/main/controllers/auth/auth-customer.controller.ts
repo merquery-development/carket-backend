@@ -72,15 +72,15 @@ export class AuthCustomerController {
     return this.authService.facebookLogin(req);
   }
 
-  // Optional endpoint for showing the Facebook user info
-  @Get('facebook/login')
-  facebookLogin(@Req() req) {
-    if (!req.user) {
-      return 'No user from Facebook';
-    }
-    return {
-      message: 'User information from Facebook',
-      user: req.user,
-    };
-  }
+  // // Optional endpoint for showing the Facebook user info
+  // @Get('facebook/login')
+  // facebookLogin(@Req() req) {
+  //   if (!req.user) {
+  //     return 'No user from Facebook';
+  //   }
+  //   return {
+  //     message: 'User information from Facebook',
+  //     user: req.user,
+  //   };
+  // }
 }

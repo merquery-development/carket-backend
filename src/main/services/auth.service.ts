@@ -156,47 +156,52 @@ export class AuthService {
   async refresh(refreshToken: string) {
     try {
       // ตรวจสอบ Refresh Token
-
       const decoded = await this.jwtService.verifyAsync(refreshToken, {
         secret: process.env.REFRESH_TOKEN_SECRET,
       });
-
-      // ตรวจสอบว่า Refresh Token ถูกต้อง
-      const vendor = await this.vendorService.getVendorUserByuid(decoded.uid);
-
-      if (!vendor) {
-        throw new UnauthorizedException('Invalid refresh token');
+  
+      // แยกประเภทผู้ใช้ตามฟิลด์ใน payload
+      let user;
+      if (decoded.customeruid) {
+        user = await this.customerService.getCustomerByUid(decoded.customeruid); // สำหรับ customer
+      } else if (decoded.vendoruid) {
+        user = await this.vendorService.getVendorUserByuid(decoded.vendoruid); // สำหรับ vendor
+      } else {
+        throw new UnauthorizedException('Invalid token payload');
       }
-
-      // ตรวจสอบเวลาที่ล็อกอินล่าสุด
+  
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+  
+      // ตรวจสอบเวลาที่ล็อกอินล่าสุด (เฉพาะ vendor)
       const now = new Date();
-
-      const lastLogin = new Date(vendor.lastLogin);
-
-      // ตรวจสอบว่าการล็อกอินล่าสุดอยู่ในช่วงเวลาที่ Refresh Token ถูกต้อง
+      const lastLogin = new Date(user.lastLogin);
+  
       const tokenValidPeriod = 24 * 60 * 60 * 1000; // 24 ชั่วโมง
-
-      if (now.getTime() - lastLogin.getTime() > tokenValidPeriod) {
-        //เวลาตอนนี้-เวลาล็อคอินมากกว่า 24 มั้ย
-        throw new HttpException(
-          "Refresh token expired'",
-          HttpStatus.UNAUTHORIZED,
-        );
+      if (decoded.vendoruid && now.getTime() - lastLogin.getTime() > tokenValidPeriod) {
+        throw new HttpException('Refresh token expired', HttpStatus.UNAUTHORIZED);
       }
-
-      // สร้าง Access Token และ Refresh Token ใหม่
-      const newPayload = { uid: decoded.uid, username: decoded.username };
+  
+      // สร้าง Access Token ใหม่
+      const newPayload = {
+        uid: decoded.customeruid || decoded.vendoruid,
+        username: user.username,
+        ...(decoded.customeruid ? { customeruid: decoded.customeruid } : {}),
+        ...(decoded.vendoruid ? { vendoruid: decoded.vendoruid } : {}),
+      };
+  
       const newAccessToken = await this.jwtService.signAsync(newPayload, {
         secret: process.env.ACCESS_TOKEN_SECRET,
         expiresIn: '15m',
       });
-
+  
       return {
         accessToken: newAccessToken,
         refreshToken,
       };
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
+      throw new HttpException(error.message || 'Unauthorized', HttpStatus.UNAUTHORIZED);
     }
   }
   async getProfile(token: string) {

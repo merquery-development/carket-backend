@@ -36,6 +36,8 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
   @ApiBearerAuth('defaultBearerAuth') // Indicates that Bearer token is required
   async refresh(@Body() body: RefreshTokenDto) {
+
+    
     return this.authService.refresh(body.refreshToken);
   }
 
