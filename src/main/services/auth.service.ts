@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { CustomerService } from './customer.service';
 import { VendorService } from './vendor.service';
+import { log } from 'console';
 
 @Injectable()
 export class AuthService {
@@ -260,12 +261,9 @@ export class AuthService {
         secret: process.env.REFRESH_TOKEN_SECRET,
         expiresIn: '1d',
       });
+      const frontendRedirectUrl = `http://localhost:3000?accessToken=${accessToken}&refreshToken=${refreshToken}`;
 
-      return {
-        message: 'User signed in via Google',
-        accessToken,
-        refreshToken,
-      };
+      return frontendRedirectUrl;
     } else {
       // ถ้ามีบัญชีอยู่แล้วแต่ไม่ใช่ OAuth หรือ OAuth จาก provider อื่น
       throw new HttpException(
@@ -274,10 +272,7 @@ export class AuthService {
       );
     }
 
-    return {
-      message: 'User created and signed in via Google',
-      user: req.user,
-    };
+  
   }
 
   async facebookLogin(req) {

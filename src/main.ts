@@ -2,8 +2,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { ExpressAdapter } from '@nestjs/platform-express';
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {});
+  const app = await NestFactory.create(AppModule, new ExpressAdapter());
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
@@ -24,7 +25,7 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
- 
+
   await app.listen(3000);
 }
 bootstrap();

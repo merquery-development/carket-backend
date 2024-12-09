@@ -5,12 +5,14 @@ import {
   HttpCode,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthService } from 'src/main/services/auth.service';
+import { Response } from 'express';
 
+import { AuthService } from 'src/main/services/auth.service';
 @ApiTags('auth-customer')
 @Controller('auth-customer')
 export class AuthCustomerController {
@@ -47,17 +49,15 @@ export class AuthCustomerController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Login with Google' })
-  async googleAuth(@Req() req) {
-  
-    
-  }
+  async googleAuth(@Req() req) {}
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(@Req() req) {
-    const redirectUri = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth-customer/google/callback';
-    console.log(redirectUri);
-    return this.authService.googleLogin(req);
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+    const user = await this.authService.googleLogin(req);
+
+    
+    return res.redirect(user); // Redirect ไปยัง Frontend
   }
   // Facebook login route
   @Get('facebook')
