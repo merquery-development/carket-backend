@@ -108,10 +108,10 @@ export class CarPostService {
       sortBy,
       sortOrder,
     } = params;
-  
+
     const pageNumber = page ? parseInt(page, 10) : 1;
     const pageLimit = pageSize ? parseInt(pageSize, 10) : 10;
-  
+
     const result = await getCarsAndStats({
       prismaModel: this.prisma.carPost,
       customSelect: {
@@ -158,14 +158,14 @@ export class CarPostService {
       categoryId: categoryId ? categoryId.map((id) => parseInt(id, 10)) : [],
       priceMin: priceMin ? parseFloat(priceMin) : null,
       priceMax: priceMax ? parseFloat(priceMax) : null,
-      modelName,
-      vendorName,
+      modelName: modelName ? modelName.trim() : null,
+      vendorName: vendorName ? vendorName.trim() : null,
       sortBy,
       sortOrder,
     });
-  
+
     // Map ข้อมูลผลลัพธ์
-     result.items = result.items.map((item) => ({
+    result.items = result.items.map((item) => ({
       id: item.id,
       basePrice: item.price,
       year: item.year,
@@ -186,7 +186,7 @@ export class CarPostService {
         (picture) => `${picture.picturePath}${picture.pictureName}`,
       ),
     }));
-  
+
     return result;
   }
 
@@ -200,8 +200,8 @@ export class CarPostService {
       priceMin,
       priceMax,
       modelName,
-      sortBy,
-      sortOrder,
+      sortBy = 'price',
+      sortOrder = 'asc',
     } = params;
   
     const pageNumber = page ? parseInt(page, 10) : 1;
@@ -254,7 +254,7 @@ export class CarPostService {
       categoryId: categoryId ? categoryId.map((id) => parseInt(id, 10)) : [],
       priceMin: priceMin ? parseFloat(priceMin) : null,
       priceMax: priceMax ? parseFloat(priceMax) : null,
-      modelName,
+      modelName: modelName ? modelName.trim() : null,
       sortBy,
       sortOrder,
     });
@@ -284,9 +284,6 @@ export class CarPostService {
   
     return result;
   }
-  
-
-
   async getCarPostById(id: string) {
     try {
       const result = this.prisma.carPost.findFirst({
@@ -302,15 +299,13 @@ export class CarPostService {
 
   async getCarPostByVendorUid(uid: string) {
     try {
-
-      
       const result = await this.prisma.carPost.findMany({
-        where: { 
-          vendor: { 
-            users: { 
-              some: { uid: uid } // ตรวจสอบว่ามีผู้ใช้ที่มี UID ตรงกัน
-            } 
-          } 
+        where: {
+          vendor: {
+            users: {
+              some: { uid: uid }, // ตรวจสอบว่ามีผู้ใช้ที่มี UID ตรงกัน
+            },
+          },
         },
         select: {
           id: true,
@@ -346,11 +341,11 @@ export class CarPostService {
           },
         },
       });
-  
+
       if (!result || result.length === 0) {
         throw new HttpException('Car post not found', HttpStatus.NOT_FOUND);
       }
-  
+
       // Map ข้อมูลผลลัพธ์ให้อยู่ในรูปแบบเดียวกับ getCarPostByVendor
       return result.map((item) => ({
         id: item.id,
@@ -380,7 +375,7 @@ export class CarPostService {
       );
     }
   }
-  
+
   async getCarBar() {
     // Step 1: Retrieve max and min prices
     const maxPrice = await this.prisma.carPost.aggregate({

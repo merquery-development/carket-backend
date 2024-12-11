@@ -160,7 +160,8 @@ export class AuthService {
       const decoded = await this.jwtService.verifyAsync(refreshToken, {
         secret: process.env.REFRESH_TOKEN_SECRET,
       });
-  
+
+      
       // แยกประเภทผู้ใช้ตามฟิลด์ใน payload
       let user;
       if (decoded.customeruid) {
@@ -249,7 +250,7 @@ export class AuthService {
     } else if (customer.isOauth && customer.oauthType === oauthType) {
       // ถ้ามีบัญชีอยู่แล้วและเป็น OAuth จาก Google ให้ sign in เลย
       const payload = {
-        uid: customer.uid,
+        customeruid: customer.uid,
         username: customer.username,
         email: customer.email,
       };

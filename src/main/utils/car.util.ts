@@ -1,4 +1,5 @@
 import { getPagination } from './pagination';
+
 export async function getCarsAndStats({
   prismaModel,
   page,
@@ -9,11 +10,11 @@ export async function getCarsAndStats({
   priceMax,
   modelName,
   vendorName,
-  vendorId, // เพิ่ม vendorId
-  sortBy,
-  sortOrder,
-  customSelect,
-  fieldMapping,
+  vendorId, // รองรับ vendorId
+  sortBy = 'id', // ค่าเริ่มต้น
+  sortOrder = 'asc', // ค่าเริ่มต้น
+  customSelect = {},
+  fieldMapping = {},
 }: {
   prismaModel: any;
   page?: number | null;
@@ -24,78 +25,60 @@ export async function getCarsAndStats({
   priceMax?: number | null;
   modelName?: string;
   vendorName?: string;
-  vendorId?: number | null; // เพิ่ม vendorId
+  vendorId?: number | null; // รองรับ vendorId
   sortBy?: string;
-  sortOrder?: string;
+  sortOrder?: 'asc' | 'desc'; // กำหนดประเภทชัดเจน
   customSelect?: object;
   fieldMapping?: object;
 }) {
   const { skip, take } = getPagination(page, pageSize);
 
   // เงื่อนไขการกรอง
-  const where = {
-    ...(brandId?.length > 0
-      ? {
-          car: {
-            Brand: {
-              id: { in: brandId },
-            },
-          },
-        }
-      : {}),
-    ...(categoryId?.length > 0
-      ? {
-          car: {
-            Category: {
-              id: { in: categoryId },
-            },
-          },
-        }
-      : {}),
-    ...(priceMin !== null && priceMax !== null
-      ? { price: { gte: priceMin, lte: priceMax } }
-      : {}),
-    ...(modelName
-      ? {
-          car: {
-            Model: {
-              name: { contains: modelName, mode: 'insensitive' },
-            },
-          },
-        }
-      : {}),
-    ...(vendorId
-      ? {
-          vendorId: vendorId, // กรองตาม vendorId
-        }
-      : {}),
+  const where: any = {
+    ...(brandId?.length > 0 && {
+      car: {
+        Brand: { id: { in: brandId } },
+      },
+    }),
+    ...(categoryId?.length > 0 && {
+      car: {
+        Category: { id: { in: categoryId } },
+      },
+    }),
+    ...(priceMin !== null && priceMax !== null && {
+      price: { gte: priceMin, lte: priceMax },
+    }),
+    ...(modelName && {
+      car: {
+        Model: { name: { contains: modelName, mode: 'insensitive' } },
+      },
+    }),
+    ...(vendorId && {
+      vendorId: vendorId,
+    }),
   };
 
   // เงื่อนไขสำหรับ vendorName
-  const vendorWhere = vendorName
-    ? {
-        vendor: {
-          name: { contains: vendorName, mode: 'insensitive' },
-        },
-      }
-    : {};
-
-  // รวมเงื่อนไขการกรองทั้งหมด
-  const finalWhere = { ...where, ...vendorWhere };
+  if (vendorName) {
+    where.vendor = {
+      ...where.vendor,
+      name: { contains: vendorName, mode: 'insensitive' },
+    };
+  }
 
   // ดึงข้อมูลจาก Prisma
   const [items, total] = await Promise.all([
     prismaModel.findMany({
       skip,
       take,
-      where: finalWhere,
+      where,
       orderBy: {
         [sortBy]: sortOrder,
       },
       select: customSelect,
     }),
     prismaModel.count({
-      where: finalWhere, // ใช้เงื่อนไขเดียวกันสำหรับ count
+      where, // ใช้เงื่อนไขเดียวกันสำหรับ count
     }),
   ]);
 

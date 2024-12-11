@@ -357,13 +357,11 @@ export class CarPostController {
   async getBarByMile() {
     return await this.carPostService.getCarBarByMileage();
   }
-
   @Get('vendor/:vendorUid')
   @ApiOperation({
     summary: 'Get car post by vendor UID',
     description: 'Retrieve a car post by its unique identifier (UID).',
   })
-
   @ApiOkResponse({ description: 'List of car posts' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiQuery({ name: 'page', required: false, type: String })
@@ -383,9 +381,13 @@ export class CarPostController {
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
   @ApiQuery({ name: 'modelName', required: false, type: String }) // เพิ่ม modelName
   @ApiQuery({ name: 'vendorName', required: false, type: String }) // เพิ่ม vendorName
-  async getCarPostByVendorUid(@Param('vendorUid') uid: string) {
+  @ApiQuery({ name: 'vendorId', required: false, type: String }) // เพิ่ม vendorId สำหรับกรอง
+  async getCarPostByVendorUid(
+    @Param('vendorUid') uid: string,
+    
+  ) {
     try {
-      return await this.carPostService.getCarPostByVendorUid(uid);
+      return await this.carPostService.getCarPostByVendorUid(uid); // ส่ง vendorId ไปยัง service
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -396,7 +398,6 @@ export class CarPostController {
       );
     }
   }
-
   @Get('carpost/:postUid')
   async getCarPostByUid(@Param('postUid') postUid: string) {
     try {
