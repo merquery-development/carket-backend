@@ -9,10 +9,11 @@ export async function getCarsAndStats({
   priceMax,
   modelName,
   vendorName,
+  vendorId, // เพิ่ม vendorId
   sortBy,
   sortOrder,
   customSelect,
-  fieldMapping,  // เพิ่ม fieldMapping เข้าไป
+  fieldMapping,
 }: {
   prismaModel: any;
   page?: number | null;
@@ -23,11 +24,12 @@ export async function getCarsAndStats({
   priceMax?: number | null;
   modelName?: string;
   vendorName?: string;
+  vendorId?: number | null; // เพิ่ม vendorId
   sortBy?: string;
   sortOrder?: string;
   customSelect?: object;
-  fieldMapping?: object;  // ประกาศ fieldMapping
-}){
+  fieldMapping?: object;
+}) {
   const { skip, take } = getPagination(page, pageSize);
 
   // เงื่อนไขการกรอง
@@ -60,6 +62,11 @@ export async function getCarsAndStats({
               name: { contains: modelName, mode: 'insensitive' },
             },
           },
+        }
+      : {}),
+    ...(vendorId
+      ? {
+          vendorId: vendorId, // กรองตาม vendorId
         }
       : {}),
   };

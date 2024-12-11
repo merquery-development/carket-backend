@@ -203,7 +203,6 @@ export class CarPostController {
     @Param('carPostId') carPostId: string,
     @Body() updateCarPostDto: UpdateCarPostDto,
     @Req() request: Request,
-
   ) {
     const token = request.headers['authorization']?.split(' ')[1];
     if (!token) {
@@ -228,7 +227,6 @@ export class CarPostController {
 
     try {
       const updatedCarPost = await this.carPostService.updateCarPost(
-        
         carPostId,
         vendorUser.vendorId,
         updateCarPostDto,
@@ -268,7 +266,12 @@ export class CarPostController {
   @ApiQuery({ name: 'page', required: false, type: String })
   @ApiQuery({ name: 'pageSize', required: false, type: String })
   @ApiQuery({ name: 'brandId', required: false, type: [String], isArray: true }) // รองรับ array
-  @ApiQuery({ name: 'categoryId', required: false, type: [String], isArray: true }) // รองรับ array
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    type: [String],
+    isArray: true,
+  }) // รองรับ array
   @ApiQuery({ name: 'priceMin', required: false, type: String })
   @ApiQuery({ name: 'priceMax', required: false, type: String })
   @ApiQuery({ name: 'mileageMin', required: false, type: String })
@@ -289,14 +292,16 @@ export class CarPostController {
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
     @Query('modelName') modelName?: string, // เพิ่ม modelName
-    @Query('vendorName') vendorName?: string, 
+    @Query('vendorName') vendorName?: string,
   ) {
     try {
       const result = await this.carPostService.getCarPosts({
         page: page ? parseInt(page, 10) : null,
         pageSize: pageSize ? parseInt(pageSize, 10) : null,
-        brandId: brandId ? brandId.map(id => parseInt(id, 10)) : null, // แปลงเป็น array ของตัวเลข
-        categoryId: categoryId ? categoryId.map(id => parseInt(id, 10)) : null, // แปลงเป็น array ของตัวเลข
+        brandId: brandId ? brandId.map((id) => parseInt(id, 10)) : null, // แปลงเป็น array ของตัวเลข
+        categoryId: categoryId
+          ? categoryId.map((id) => parseInt(id, 10))
+          : null, // แปลงเป็น array ของตัวเลข
         priceMin: priceMin ? parseFloat(priceMin) : null,
         priceMax: priceMax ? parseFloat(priceMax) : null,
         mileageMin: mileageMin ? parseInt(mileageMin, 10) : null,
@@ -341,7 +346,7 @@ export class CarPostController {
   async getBar() {
     return await this.carPostService.getCarBar();
   }
-  
+
   @CacheKey('bar-mile')
   @CacheTTL(24 * 60 * 60 * 1000) //millisecond
   @Get('bar-mileage')
@@ -353,6 +358,44 @@ export class CarPostController {
     return await this.carPostService.getCarBarByMileage();
   }
 
+  @Get('vendor/:vendorUid')
+  @ApiOperation({
+    summary: 'Get car post by vendor UID',
+    description: 'Retrieve a car post by its unique identifier (UID).',
+  })
+
+  @ApiOkResponse({ description: 'List of car posts' })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
+  @ApiQuery({ name: 'page', required: false, type: String })
+  @ApiQuery({ name: 'pageSize', required: false, type: String })
+  @ApiQuery({ name: 'brandId', required: false, type: [String], isArray: true }) // รองรับ array
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    type: [String],
+    isArray: true,
+  }) // รองรับ array
+  @ApiQuery({ name: 'priceMin', required: false, type: String })
+  @ApiQuery({ name: 'priceMax', required: false, type: String })
+  @ApiQuery({ name: 'mileageMin', required: false, type: String })
+  @ApiQuery({ name: 'mileageMax', required: false, type: String })
+  @ApiQuery({ name: 'sortBy', required: false, type: String })
+  @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
+  @ApiQuery({ name: 'modelName', required: false, type: String }) // เพิ่ม modelName
+  @ApiQuery({ name: 'vendorName', required: false, type: String }) // เพิ่ม vendorName
+  async getCarPostByVendorUid(@Param('vendorUid') uid: string) {
+    try {
+      return await this.carPostService.getCarPostByVendorUid(uid);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        'Internal Server Error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   @Get('carpost/:postUid')
   async getCarPostByUid(@Param('postUid') postUid: string) {

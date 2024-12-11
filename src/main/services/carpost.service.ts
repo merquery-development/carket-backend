@@ -190,6 +190,103 @@ export class CarPostService {
     return result;
   }
 
+  async getCarPostByVendor(params) {
+    const {
+      page,
+      pageSize,
+      vendorId,
+      brandId,
+      categoryId,
+      priceMin,
+      priceMax,
+      modelName,
+      sortBy,
+      sortOrder,
+    } = params;
+  
+    const pageNumber = page ? parseInt(page, 10) : 1;
+    const pageLimit = pageSize ? parseInt(pageSize, 10) : 10;
+  
+    const result = await getCarsAndStats({
+      prismaModel: this.prisma.carPost,
+      customSelect: {
+        id: true,
+        price: true,
+        mileage: true,
+        year: true,
+        favoriteCount: true,
+        car: {
+          select: {
+            Brand: { select: { name: true } },
+            Category: { select: { name: true } },
+            Model: { select: { name: true } },
+          },
+        },
+        vendor: {
+          select: {
+            name: true,
+            address: true,
+            users: {
+              select: {
+                username: true,
+                profilePicturePath: true,
+                profilePictureName: true,
+              },
+            },
+          },
+        },
+        pictures: {
+          select: {
+            pictureName: true,
+            picturePath: true,
+          },
+        },
+      },
+      fieldMapping: {
+        priceField: 'price',
+        brandIdField: 'car.brandId',
+        categoryIdField: 'car.categoryId',
+      },
+      page: pageNumber,
+      pageSize: pageLimit,
+      vendorId: vendorId ? parseInt(vendorId, 10) : null,
+      brandId: brandId ? brandId.map((id) => parseInt(id, 10)) : [],
+      categoryId: categoryId ? categoryId.map((id) => parseInt(id, 10)) : [],
+      priceMin: priceMin ? parseFloat(priceMin) : null,
+      priceMax: priceMax ? parseFloat(priceMax) : null,
+      modelName,
+      sortBy,
+      sortOrder,
+    });
+  
+    // Map ข้อมูลผลลัพธ์
+    result.items = result.items.map((item) => ({
+      id: item.id,
+      basePrice: item.price,
+      year: item.year,
+      mileage: item.mileage,
+      favorite: item.favoriteCount,
+      vendor: {
+        name: item.vendor.name,
+        address: item.vendor.address,
+        profile:
+          item.vendor.users.length > 0
+            ? `${item.vendor.users[0].profilePicturePath}${item.vendor.users[0].profilePictureName}`
+            : null,
+      },
+      category: item.car?.Category?.name || null,
+      brand: item.car?.Brand?.name || null,
+      model: item.car?.Model?.name || null,
+      pictures: item.pictures.map(
+        (picture) => `${picture.picturePath}${picture.pictureName}`,
+      ),
+    }));
+  
+    return result;
+  }
+  
+
+
   async getCarPostById(id: string) {
     try {
       const result = this.prisma.carPost.findFirst({
@@ -202,6 +299,88 @@ export class CarPostService {
       throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
   }
+
+  async getCarPostByVendorUid(uid: string) {
+    try {
+
+      
+      const result = await this.prisma.carPost.findMany({
+        where: { 
+          vendor: { 
+            users: { 
+              some: { uid: uid } // ตรวจสอบว่ามีผู้ใช้ที่มี UID ตรงกัน
+            } 
+          } 
+        },
+        select: {
+          id: true,
+          price: true,
+          mileage: true,
+          year: true,
+          favoriteCount: true,
+          car: {
+            select: {
+              Brand: { select: { name: true } },
+              Category: { select: { name: true } },
+              Model: { select: { name: true } },
+            },
+          },
+          vendor: {
+            select: {
+              name: true,
+              address: true,
+              users: {
+                select: {
+                  username: true,
+                  profilePicturePath: true,
+                  profilePictureName: true,
+                },
+              },
+            },
+          },
+          pictures: {
+            select: {
+              pictureName: true,
+              picturePath: true,
+            },
+          },
+        },
+      });
+  
+      if (!result || result.length === 0) {
+        throw new HttpException('Car post not found', HttpStatus.NOT_FOUND);
+      }
+  
+      // Map ข้อมูลผลลัพธ์ให้อยู่ในรูปแบบเดียวกับ getCarPostByVendor
+      return result.map((item) => ({
+        id: item.id,
+        basePrice: item.price,
+        year: item.year,
+        mileage: item.mileage,
+        favorite: item.favoriteCount,
+        vendor: {
+          name: item.vendor.name,
+          address: item.vendor.address,
+          profile:
+            item.vendor.users.length > 0
+              ? `${item.vendor.users[0].profilePicturePath}${item.vendor.users[0].profilePictureName}`
+              : null,
+        },
+        category: item.car?.Category?.name || null,
+        brand: item.car?.Brand?.name || null,
+        model: item.car?.Model?.name || null,
+        pictures: item.pictures.map(
+          (picture) => `${picture.picturePath}${picture.pictureName}`,
+        ),
+      }));
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Error retrieving car post',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+  
   async getCarBar() {
     // Step 1: Retrieve max and min prices
     const maxPrice = await this.prisma.carPost.aggregate({
