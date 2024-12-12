@@ -39,6 +39,7 @@ import { FileUploadService } from '../services/file.service';
 import { VendorService } from '../services/vendor.service';
 import { CarViewInterceptor } from '../utils/carviewIntercep';
 import { CreateCarpostPicDto, UpdateCarPostDto } from '../utils/dto/car.dto';
+import { query } from 'express';
 
 @ApiTags('carposts')
 @Controller('carposts')
@@ -278,8 +279,7 @@ export class CarPostController {
   @ApiQuery({ name: 'mileageMax', required: false, type: String })
   @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
-  @ApiQuery({ name: 'modelName', required: false, type: String }) // เพิ่ม modelName
-  @ApiQuery({ name: 'vendorName', required: false, type: String }) // เพิ่ม vendorName
+@ApiQuery({ name: 'search', required: false, type: String }) // เพิ่ม vendorName
   async getCarPosts(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
@@ -291,8 +291,7 @@ export class CarPostController {
     @Query('mileageMax') mileageMax?: string,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
-    @Query('modelName') modelName?: string, // เพิ่ม modelName
-    @Query('vendorName') vendorName?: string,
+    @Query('search')  search? : string
   ) {
     try {
       const result = await this.carPostService.getCarPosts({
@@ -308,8 +307,7 @@ export class CarPostController {
         mileageMax: mileageMax ? parseInt(mileageMax, 10) : null,
         sortBy,
         sortOrder,
-        modelName: modelName || null, // ส่ง modelName ไป
-        vendorName: vendorName || null, // ส่ง vendorName ไป
+        search
       });
       return result;
     } catch (error) {
@@ -398,6 +396,8 @@ export class CarPostController {
       );
     }
   }
+
+  
   @Get('carpost/:postUid')
   async getCarPostByUid(@Param('postUid') postUid: string) {
     try {
