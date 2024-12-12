@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { getCarsAndStats } from '../utils/car.util';
+
 import { CreateCarDto, UpdateCarDto } from '../utils/dto/car.dto';
 
 @Injectable()
@@ -8,33 +8,72 @@ export class CarService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getCars(params) {
-    const result = await getCarsAndStats({
-      prismaModel: this.prisma.car,
-      customSelect: {
+    const {
+      page = 1,
+      pageSize = 10,
+      brandId,
+      categoryId,
+      year,
+      priceMin,
+      priceMax,
+      sortBy = 'basePrice',
+      sortOrder = 'asc',
+    } = params;
+  
+    const pageNumber = page ? parseInt(page, 10) : 1;
+    const pageLimit = pageSize ? parseInt(pageSize, 10) : 10;
+  
+    // สร้างเงื่อนไขการค้นหา
+    const where = {};
+    if (brandId ) {
+      where['brandId'] = Number(brandId);
+    }
+    if(year){
+      where['year'] = Number(year);
+    }
+    if (categoryId ) {
+      where['categoryId'] = Number(categoryId);
+    }
+    if (priceMin) {
+      where['basePrice'] = { gte: priceMin };
+    }
+    if (priceMax) {
+      where['basePrice'] = { lte: priceMax };
+    }
+  
+    // ตั้งค่า sort order
+    const orderBy = { [sortBy]: sortOrder === 'desc' ? 'desc' : 'asc' };
+  
+    // ดึงข้อมูลจาก Prisma
+    const cars = await this.prisma.car.findMany({
+      where,
+      skip: (pageNumber - 1) * pageLimit,
+      take: pageLimit,
+      orderBy,
+      select: {
         id: true,
         basePrice: true,
         year: true,
         Category: { select: { name: true } },
         Brand: { select: { name: true } },
       },
-      fieldMapping: {
-        priceField: 'basePrice',
-        brandIdField: 'brandId',
-        categoryIdField: 'categoryId',
-      },
-      ...params,
     });
-
-    result.items = result.items.map((item) => ({
+  
+    // จัดการข้อมูลผลลัพธ์
+    const items = cars.map((item) => ({
       id: item.id,
-      basePrice: item.basePrice,
+      basePrice: parseFloat(Number(item.basePrice).toFixed(2)), // รูปแบบราคา 2 ตำแหน่ง
       year: item.year,
-      category: item.Category?.name || null, // Extract category name
-      brand: item.Brand?.name || null, // Extract brand name
+      category: item.Category?.name || null,
+      brand: item.Brand?.name || null,
     }));
-    return result.items;
+  
+    // คำนวณจำนวนหน้าทั้งหมด
+    // const totalCount = await this.prisma.car.count({ where });
+    // const totalPages = Math.ceil(totalCount / pageLimit);
+  
+    return items;
   }
-
   async createCar(createCarDto: CreateCarDto) {
     try {
       const result = await this.prisma.car.create({
@@ -146,8 +185,7 @@ export class CarService {
     try {
       const result = await this.prisma.category.findFirst({
         where: {
-           id,
-        
+          id,
         },
       });
       return result;
@@ -186,11 +224,11 @@ export class CarService {
     const category = await this.prisma.category.findUnique({
       where: { id: categoryId },
     });
-  
+
     if (!category) {
       throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
     }
-  
+
     // อัปเดตข้อมูลโลโก้ตามฟิลด์ที่ส่งมา
     await this.prisma.category.update({
       where: { id: categoryId },

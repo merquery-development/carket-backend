@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { CarService } from '../services/car.service';
 import { CreateCarDto, UpdateCarDto } from '../utils/dto/car.dto';
+
 @ApiTags('cars')
 @Controller('cars')
 @ApiBearerAuth('defaultBearerAuth')
@@ -81,18 +82,6 @@ export class CarController {
     description: 'Sort direction (asc or desc)',
   })
   @ApiQuery({
-    name: 'mileageMin',
-    required: false,
-    type: Number,
-    description: 'Minimum mileage to filter',
-  })
-  @ApiQuery({
-    name: 'mileageMax',
-    required: false,
-    type: Number,
-    description: 'Maximum mileage to filter',
-  })
-  @ApiQuery({
     name: 'priceMin',
     required: false,
     type: Number,
@@ -122,8 +111,6 @@ export class CarController {
     @Query('year') year: number,
     @Query('sortBy') sortBy: string,
     @Query('sortOrder') sortOrder: 'asc' | 'desc',
-    @Query('mileageMin') mileageMin: number,
-    @Query('mileageMax') mileageMax: number,
     @Query('priceMin') priceMin: number,
     @Query('priceMax') priceMax: number,
     @Query('brandId') brandId: number,
@@ -137,10 +124,8 @@ export class CarController {
         year: year || null,
         sortBy: sortBy || 'createdAt',
         sortOrder: sortOrder || 'asc',
-        mileageMin: mileageMin || null,
-        mileageMax: mileageMax || null,
-        priceMin: priceMin || null,
-        priceMax: priceMax || null,
+        priceMin: Number(priceMin) || null,
+        priceMax: Number(priceMax) || null,
         brandId: brandId || null,
         categoryId: categoryId || null,
       };
@@ -148,6 +133,8 @@ export class CarController {
       const result = await this.carService.getCars(filterOptions);
       return result;
     } catch (error) {
+     
+      
       throw new HttpException(
         { message: 'Error fetching car data', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -225,7 +212,7 @@ export class CarController {
       return car;
     } catch (error) {
       throw new HttpException(
-        { message: 'Error deleting car', error: error.message },
+        { message: 'Error fetch car', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
