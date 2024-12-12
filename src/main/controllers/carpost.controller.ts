@@ -402,7 +402,20 @@ export class CarPostController {
       return car;
     } catch (error) {
       throw new HttpException(
-        { message: 'Error deleting car', error: error.message },
+        { message: 'Error getCarPostByUid', error: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('newcar/:vendorUid')
+  async getNewCar(@Param('vendorUid') uid : string){
+    try {
+        const newest = await this.carPostService.getNewCarpostByVendor(uid)
+        return newest
+    } catch (error) {
+      throw new HttpException(
+        { message: 'Error newest car', error: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

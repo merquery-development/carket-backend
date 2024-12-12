@@ -4,7 +4,6 @@ import { PrismaService } from 'src/prisma.service';
 
 import { CreateCarPostDto, UpdateCarPostDto } from '../utils/dto/car.dto';
 import { firstPartUid } from '../utils/pagination';
-import { log } from 'node:console';
 
 @Injectable()
 export class CarPostService {
@@ -115,27 +114,29 @@ export class CarPostService {
     const pageNumber = page ? parseInt(page, 10) : 1;
     const pageLimit = pageSize ? parseInt(pageSize, 10) : 10;
 
-
     // สร้างเงื่อนไขการค้นหา
     const where = {};
-    if(brandId != null && brandId != undefined){
-      if (brandId.length > 1 ) {
-        where['car'] = { brandId: { in: brandId.map((id) => parseInt(id, 10)) } };
-      }  if (brandId.length == 1) {
+    if (brandId != null && brandId != undefined) {
+      if (brandId.length > 1) {
+        where['car'] = {
+          brandId: { in: brandId.map((id) => parseInt(id, 10)) },
+        };
+      }
+      if (brandId.length == 1) {
         where['car'] = { brandId: Number(brandId) };
       }
-      }
-     
-      if(categoryId != null && categoryId != undefined){
-    if (  categoryId.length > 1) {
-     where['car'] = {
-        Category :{ id :{ in: categoryId.map((id) => parseInt(id, 10)) }},
-      };
-    }  if (categoryId.length == 1) {
-   
-      where['car'] = { Category:{id : Number(categoryId)} };
     }
-  }
+
+    if (categoryId != null && categoryId != undefined) {
+      if (categoryId.length > 1) {
+        where['car'] = {
+          Category: { id: { in: categoryId.map((id) => parseInt(id, 10)) } },
+        };
+      }
+      if (categoryId.length == 1) {
+        where['car'] = { Category: { id: Number(categoryId) } };
+      }
+    }
     if (priceMin) {
       where['price'] = { gte: priceMin };
     }
@@ -148,7 +149,7 @@ export class CarPostService {
     if (mileageMax) {
       where['mileage'] = { lte: mileageMax };
     }
-   
+
     if (search) {
       where['OR'] = [
         {
@@ -163,7 +164,6 @@ export class CarPostService {
         },
       ];
     }
-
 
     // ตั้งค่า sort order
     const orderBy = sortBy
@@ -185,7 +185,6 @@ export class CarPostService {
 
         car: {
           select: {
-     
             Brand: { select: { name: true } },
             Category: { select: { name: true } },
             Model: { select: { name: true } },
@@ -239,12 +238,10 @@ export class CarPostService {
     // // คำนวณจำนวนหน้าทั้งหมด
     // const totalCount = await this.prisma.carPost.count({ where });
     // const totalPages = Math.ceil(totalCount / pageLimit);
-  
-    
+
     return items;
   }
 
- 
   async getCarPostById(id: string) {
     try {
       const result = this.prisma.carPost.findFirst({
@@ -258,7 +255,7 @@ export class CarPostService {
     }
   }
 
-  async getCarPostByVendorUid( params) {
+  async getCarPostByVendorUid(params) {
     const {
       uid,
       page,
@@ -271,10 +268,10 @@ export class CarPostService {
       sortOrder,
       search,
     } = params;
-  
+
     const pageNumber = page ? parseInt(page, 10) : 1;
     const pageLimit = pageSize ? parseInt(pageSize, 10) : 10;
-  
+
     const where: any = {
       vendor: {
         users: {
@@ -282,7 +279,7 @@ export class CarPostService {
         },
       },
     };
-  
+
     // เงื่อนไขช่วงราคา
     if (priceMin !== undefined) {
       where['price'] = { ...where['price'], gte: priceMin };
@@ -290,7 +287,7 @@ export class CarPostService {
     if (priceMax !== undefined) {
       where['price'] = { ...where['price'], lte: priceMax };
     }
-  
+
     // เงื่อนไขช่วง Mileage
     if (mileageMin !== undefined) {
       where['mileage'] = { ...where['mileage'], gte: mileageMin };
@@ -298,7 +295,7 @@ export class CarPostService {
     if (mileageMax !== undefined) {
       where['mileage'] = { ...where['mileage'], lte: mileageMax };
     }
-  
+
     // เงื่อนไขการค้นหา
     if (search) {
       where['OR'] = [
@@ -314,12 +311,12 @@ export class CarPostService {
         },
       ];
     }
-  
+
     // ตั้งค่า sort order
     const orderBy = sortBy
       ? { [sortBy]: sortOrder === 'desc' ? 'desc' : 'asc' }
       : undefined;
-  
+
     try {
       // ดึงข้อมูลจาก Prisma
       const result = await this.prisma.carPost.findMany({
@@ -361,7 +358,7 @@ export class CarPostService {
           },
         },
       });
-  
+
       // จัดการข้อมูลผลลัพธ์ให้อยู่ในรูปแบบที่กำหนด
       const items = result.map((item) => ({
         id: item.id,
@@ -384,7 +381,7 @@ export class CarPostService {
           (picture) => `${picture.picturePath}${picture.pictureName}`,
         ),
       }));
-  
+
       return items;
     } catch (error) {
       throw new HttpException(
@@ -622,4 +619,89 @@ export class CarPostService {
 
     return result;
   }
-}
+
+  async getNewCarpostByVendor(uid: string) {
+  
+    const result = await this.prisma.carPost.findMany({
+      where: {
+        vendor: {
+          users: {
+            some: { uid },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 3,
+      select: {
+        id: true,
+        price: true,
+        mileage: true,
+        year: true,
+        favoriteCount: true,
+        createdAt: true,
+        car: {
+          select: {
+            Brand: { select: { name: true } },
+            Category: { select: { name: true } },
+            Model: { select: { name: true } },
+          },
+        },
+        vendor: {
+          select: {
+            name: true,
+            address: true,
+            users: {
+              select: {
+                username: true,
+                profilePicturePath: true,
+                profilePictureName: true,
+              },
+            },
+          },
+        },
+        pictures: {
+          select: {
+            pictureName: true,
+            picturePath: true,
+          },
+        },
+      },
+    });
+  
+    // จัดการข้อมูลผลลัพธ์ให้อยู่ในรูปแบบที่กำหนด
+    const items = result.map((item) => {
+      const date = new Date(item.createdAt);
+      const month = date.toLocaleString('en-US', { month: 'short' });
+      const day = date.getDate();
+      const year = date.getFullYear();
+  
+      const formattedDate = `${month} ${day < 10 ? '0' + day : day} ${year}`;
+  
+      return {
+        id: item.id,
+        price: parseFloat(Number(item.price).toFixed(2)),
+        year: item.year,
+        mileage: item.mileage,
+        favorite: item.favoriteCount,
+        date: formattedDate, // เปลี่ยนแปลงตรงนี้
+        vendor: {
+          name: item.vendor.name,
+          address: item.vendor.address,
+          profile:
+            item.vendor.users.length > 0
+              ? `${item.vendor.users[0].profilePicturePath}${item.vendor.users[0].profilePictureName}`
+              : null,
+        },
+        category: item.car?.Category?.name || null,
+        brand: item.car?.Brand?.name || null,
+        model: item.car?.Model?.name || null,
+        pictures: item.pictures.map(
+          (picture) => `${picture.picturePath}${picture.pictureName}`,
+        ),
+      };
+    });
+  
+    return items;
+  }}
