@@ -205,7 +205,7 @@ export class CarController {
     }
   }
 
-  @Get('car/:carId')
+  @Get('id/:carId')
   async getCarbyid(@Param('carId') carId: string) {
     try {
       const car = await this.carService.getCarById(Number(carId));

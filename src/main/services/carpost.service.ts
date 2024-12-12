@@ -244,100 +244,7 @@ export class CarPostService {
     return items;
   }
 
-  async getCarPostByVendor(params) {
-    const {
-      page,
-      pageSize,
-      vendorId,
-      brandId,
-      categoryId,
-      priceMin,
-      priceMax,
-      modelName,
-      sortBy = 'price',
-      sortOrder = 'asc',
-    } = params;
-
-    const pageNumber = page ? parseInt(page, 10) : 1;
-    const pageLimit = pageSize ? parseInt(pageSize, 10) : 10;
-
-    // const result = await getCarsAndStats({
-    //   prismaModel: this.prisma.carPost,
-    //   customSelect: {
-    //     id: true,
-    //     price: true,
-    //     mileage: true,
-    //     year: true,
-    //     favoriteCount: true,
-    //     car: {
-    //       select: {
-    //         Brand: { select: { name: true } },
-    //         Category: { select: { name: true } },
-    //         Model: { select: { name: true } },
-    //       },
-    //     },
-    //     vendor: {
-    //       select: {
-    //         name: true,
-    //         address: true,
-    //         users: {
-    //           select: {
-    //             username: true,
-    //             profilePicturePath: true,
-    //             profilePictureName: true,
-    //           },
-    //         },
-    //       },
-    //     },
-    //     pictures: {
-    //       select: {
-    //         pictureName: true,
-    //         picturePath: true,
-    //       },
-    //     },
-    //   },
-    //   fieldMapping: {
-    //     priceField: 'price',
-    //     brandIdField: 'car.brandId',
-    //     categoryIdField: 'car.categoryId',
-    //   },
-    //   page: pageNumber,
-    //   pageSize: pageLimit,
-    //   vendorId: vendorId ? parseInt(vendorId, 10) : null,
-    //   brandId: brandId ? brandId.map((id) => parseInt(id, 10)) : [],
-    //   categoryId: categoryId ? categoryId.map((id) => parseInt(id, 10)) : [],
-    //   priceMin: priceMin ? parseFloat(priceMin) : null,
-    //   priceMax: priceMax ? parseFloat(priceMax) : null,
-    //   modelName: modelName ? modelName.trim() : null,
-    //   sortBy,
-    //   sortOrder,
-    // });
-
-    // Map ข้อมูลผลลัพธ์
-    // result.items = result.items.map((item) => ({
-    //   id: item.id,
-    //   basePrice: item.price,
-    //   year: item.year,
-    //   mileage: item.mileage,
-    //   favorite: item.favoriteCount,
-    //   vendor: {
-    //     name: item.vendor.name,
-    //     address: item.vendor.address,
-    //     profile:
-    //       item.vendor.users.length > 0
-    //         ? `${item.vendor.users[0].profilePicturePath}${item.vendor.users[0].profilePictureName}`
-    //         : null,
-    //   },
-    //   category: item.car?.Category?.name || null,
-    //   brand: item.car?.Brand?.name || null,
-    //   model: item.car?.Model?.name || null,
-    //   pictures: item.pictures.map(
-    //     (picture) => `${picture.picturePath}${picture.pictureName}`,
-    //   ),
-    // }));
-
-    // return result.items;
-  }
+ 
   async getCarPostById(id: string) {
     try {
       const result = this.prisma.carPost.findFirst({
@@ -351,16 +258,75 @@ export class CarPostService {
     }
   }
 
-  async getCarPostByVendorUid(uid: string) {
-    try {
-      const result = await this.prisma.carPost.findMany({
-        where: {
-          vendor: {
-            users: {
-              some: { uid: uid }, // ตรวจสอบว่ามีผู้ใช้ที่มี UID ตรงกัน
-            },
+  async getCarPostByVendorUid( params) {
+    const {
+      uid,
+      page,
+      pageSize,
+      priceMin,
+      priceMax,
+      mileageMin,
+      mileageMax,
+      sortBy,
+      sortOrder,
+      search,
+    } = params;
+  
+    const pageNumber = page ? parseInt(page, 10) : 1;
+    const pageLimit = pageSize ? parseInt(pageSize, 10) : 10;
+  
+    const where: any = {
+      vendor: {
+        users: {
+          some: { uid },
+        },
+      },
+    };
+  
+    // เงื่อนไขช่วงราคา
+    if (priceMin !== undefined) {
+      where['price'] = { ...where['price'], gte: priceMin };
+    }
+    if (priceMax !== undefined) {
+      where['price'] = { ...where['price'], lte: priceMax };
+    }
+  
+    // เงื่อนไขช่วง Mileage
+    if (mileageMin !== undefined) {
+      where['mileage'] = { ...where['mileage'], gte: mileageMin };
+    }
+    if (mileageMax !== undefined) {
+      where['mileage'] = { ...where['mileage'], lte: mileageMax };
+    }
+  
+    // เงื่อนไขการค้นหา
+    if (search) {
+      where['OR'] = [
+        {
+          car: {
+            Model: { name: { contains: search, mode: 'insensitive' } },
           },
         },
+        {
+          vendor: {
+            name: { contains: search, mode: 'insensitive' },
+          },
+        },
+      ];
+    }
+  
+    // ตั้งค่า sort order
+    const orderBy = sortBy
+      ? { [sortBy]: sortOrder === 'desc' ? 'desc' : 'asc' }
+      : undefined;
+  
+    try {
+      // ดึงข้อมูลจาก Prisma
+      const result = await this.prisma.carPost.findMany({
+        where,
+        skip: (pageNumber - 1) * pageLimit,
+        take: pageLimit,
+        orderBy,
         select: {
           id: true,
           price: true,
@@ -395,15 +361,11 @@ export class CarPostService {
           },
         },
       });
-
-      if (!result || result.length === 0) {
-        throw new HttpException('Car post not found', HttpStatus.NOT_FOUND);
-      }
-
-      // Map ข้อมูลผลลัพธ์ให้อยู่ในรูปแบบเดียวกับ getCarPostByVendor
-      return result.map((item) => ({
+  
+      // จัดการข้อมูลผลลัพธ์ให้อยู่ในรูปแบบที่กำหนด
+      const items = result.map((item) => ({
         id: item.id,
-        basePrice: item.price,
+        price: parseFloat(Number(item.price).toFixed(2)),
         year: item.year,
         mileage: item.mileage,
         favorite: item.favoriteCount,
@@ -422,9 +384,11 @@ export class CarPostService {
           (picture) => `${picture.picturePath}${picture.pictureName}`,
         ),
       }));
+  
+      return items;
     } catch (error) {
       throw new HttpException(
-        error.message || 'Error retrieving car post',
+        error.message || 'Error retrieving car posts by vendor UID',
         HttpStatus.BAD_REQUEST,
       );
     }

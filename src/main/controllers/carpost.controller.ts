@@ -360,7 +360,7 @@ export class CarPostController {
   async getBarByMile() {
     return await this.carPostService.getCarBarByMileage();
   }
-  @Get('vendor/:vendorUid')
+  @Get('vendoruser/uid')
   @ApiOperation({
     summary: 'Get car post by vendor UID',
     description: 'Retrieve a car post by its unique identifier (UID).',
@@ -369,25 +369,21 @@ export class CarPostController {
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @ApiQuery({ name: 'page', required: false, type: String })
   @ApiQuery({ name: 'pageSize', required: false, type: String })
-  @ApiQuery({ name: 'brandId', required: false, type: [String], isArray: true }) // รองรับ array
-  @ApiQuery({
-    name: 'categoryId',
-    required: false,
-    type: [String],
-    isArray: true,
-  }) // รองรับ array
   @ApiQuery({ name: 'priceMin', required: false, type: String })
   @ApiQuery({ name: 'priceMax', required: false, type: String })
   @ApiQuery({ name: 'mileageMin', required: false, type: String })
   @ApiQuery({ name: 'mileageMax', required: false, type: String })
   @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
-  @ApiQuery({ name: 'modelName', required: false, type: String }) // เพิ่ม modelName
-  @ApiQuery({ name: 'vendorName', required: false, type: String }) // เพิ่ม vendorName
-  @ApiQuery({ name: 'vendorId', required: false, type: String }) // เพิ่ม vendorId สำหรับกรอง
-  async getCarPostByVendorUid(@Param('vendorUid') uid: string) {
+  @ApiQuery({ name: 'brandId', required: false, type: [String], isArray: true })
+  @ApiQuery({ name: 'categoryId', required: false, type: [String], isArray: true })
+  @ApiQuery({ name: 'vendorUid', required: true, type: String })
+  async getCarPostByVendorUid(
+   
+    @Query() params: Record<string, any>,
+  ) {
     try {
-      return await this.carPostService.getCarPostByVendorUid(uid); // ส่ง vendorId ไปยัง service
+      return await this.carPostService.getCarPostByVendorUid( params); // ส่ง vendorId และ params ไปยัง service
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -399,7 +395,7 @@ export class CarPostController {
     }
   }
 
-  @Get('carpost/:postUid')
+  @Get('id/:postUid')
   async getCarPostByUid(@Param('postUid') postUid: string) {
     try {
       const car = await this.carPostService.getCarPostById(postUid);
