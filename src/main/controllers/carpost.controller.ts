@@ -39,7 +39,6 @@ import { FileUploadService } from '../services/file.service';
 import { VendorService } from '../services/vendor.service';
 import { CarViewInterceptor } from '../utils/carviewIntercep';
 import { CreateCarpostPicDto, UpdateCarPostDto } from '../utils/dto/car.dto';
-import { query } from 'express';
 
 @ApiTags('carposts')
 @Controller('carposts')
@@ -264,8 +263,8 @@ export class CarPostController {
   @ApiOperation({ summary: 'Get all car posts' })
   @ApiOkResponse({ description: 'List of car posts' })
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
-  @ApiQuery({ name: 'page', required: false, type: String })
-  @ApiQuery({ name: 'pageSize', required: false, type: String })
+  // @ApiQuery({ name: 'page', required: false, type: String })
+  // @ApiQuery({ name: 'pageSize', required: false, type: String })
   @ApiQuery({ name: 'brandId', required: false, type: [String], isArray: true }) // รองรับ array
   @ApiQuery({
     name: 'categoryId',
@@ -279,10 +278,10 @@ export class CarPostController {
   @ApiQuery({ name: 'mileageMax', required: false, type: String })
   @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
-@ApiQuery({ name: 'search', required: false, type: String }) // เพิ่ม vendorName
+  @ApiQuery({ name: 'search', required: false, type: String }) // เพิ่ม vendorName
   async getCarPosts(
-    @Query('page') page?: string,
-    @Query('pageSize') pageSize?: string,
+    // @Query('page') page?: string,
+    // @Query('pageSize') pageSize?: string,
     @Query('brandId') brandId?: string[], // เปลี่ยนเป็น array
     @Query('categoryId') categoryId?: string[], // เปลี่ยนเป็น array
     @Query('priceMin') priceMin?: string,
@@ -291,23 +290,29 @@ export class CarPostController {
     @Query('mileageMax') mileageMax?: string,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
-    @Query('search')  search? : string
+    @Query('search') search?: string,
   ) {
     try {
+      if (brandId && !Array.isArray(brandId)) {
+        brandId = [brandId]; // แปลงค่าเดียวให้เป็น array
+      }
+
+      if (categoryId && !Array.isArray(categoryId)) {
+        categoryId = [categoryId]; // แปลงค่าเดียวให้เป็น array
+      }
+
       const result = await this.carPostService.getCarPosts({
-        page: page ? parseInt(page, 10) : null,
-        pageSize: pageSize ? parseInt(pageSize, 10) : null,
-        brandId: brandId ? brandId.map((id) => parseInt(id, 10)) : null, // แปลงเป็น array ของตัวเลข
-        categoryId: categoryId
-          ? categoryId.map((id) => parseInt(id, 10))
-          : null, // แปลงเป็น array ของตัวเลข
+        // page: page ? parseInt(page, 10) : null,
+        // pageSize: pageSize ? parseInt(pageSize, 10) : null,
+        brandId: brandId,
+        categoryId: categoryId,
         priceMin: priceMin ? parseFloat(priceMin) : null,
         priceMax: priceMax ? parseFloat(priceMax) : null,
         mileageMin: mileageMin ? parseInt(mileageMin, 10) : null,
         mileageMax: mileageMax ? parseInt(mileageMax, 10) : null,
         sortBy,
         sortOrder,
-        search
+        search,
       });
       return result;
     } catch (error) {
@@ -380,10 +385,7 @@ export class CarPostController {
   @ApiQuery({ name: 'modelName', required: false, type: String }) // เพิ่ม modelName
   @ApiQuery({ name: 'vendorName', required: false, type: String }) // เพิ่ม vendorName
   @ApiQuery({ name: 'vendorId', required: false, type: String }) // เพิ่ม vendorId สำหรับกรอง
-  async getCarPostByVendorUid(
-    @Param('vendorUid') uid: string,
-    
-  ) {
+  async getCarPostByVendorUid(@Param('vendorUid') uid: string) {
     try {
       return await this.carPostService.getCarPostByVendorUid(uid); // ส่ง vendorId ไปยัง service
     } catch (error) {
@@ -397,7 +399,6 @@ export class CarPostController {
     }
   }
 
-  
   @Get('carpost/:postUid')
   async getCarPostByUid(@Param('postUid') postUid: string) {
     try {

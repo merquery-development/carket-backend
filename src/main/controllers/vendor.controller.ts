@@ -200,7 +200,7 @@ export class VendorController {
   @ApiResponse({ status: 400, description: 'Error updating vendor.' })
   updateVendor(@Param('id') id: string, @Body() updateDto: UpdateVendorDto) {
     try {
-      console.log();
+   
 
       if (Number(id) <= 0) {
         throw new BadRequestException('Id incorrect');

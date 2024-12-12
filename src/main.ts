@@ -10,7 +10,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Api')
     .setDescription('cardealer api')
-    .setVersion('1.2 oauth') //frontend
+    .setVersion('1.2.1 search') //frontend
     .addBearerAuth(undefined, 'defaultBearerAuth')
 
     .build();
