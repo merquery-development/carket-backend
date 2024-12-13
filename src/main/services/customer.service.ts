@@ -12,13 +12,13 @@ import { CreateCustomerDto } from '../utils/dto/customer.dto';
 import { CreateReviewDto } from '../utils/dto/review.dto';
 import { firstPartUid } from '../utils/pagination';
 import { AuthService } from './auth.service';
+import { log } from 'node:console';
 @Injectable()
 export class CustomerService {
   constructor(
-    private readonly prisma: PrismaService, 
+    private readonly prisma: PrismaService,
     @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
-    
   ) {}
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
@@ -35,8 +35,8 @@ export class CustomerService {
   }
   async createCustomer(createCustomerDto: CreateCustomerDto) {
     try {
-      if(!createCustomerDto){
-        throw new BadRequestException("Not enough data to register")
+      if (!createCustomerDto) {
+        throw new BadRequestException('Not enough data to register');
       }
       let hashedPassword;
       const uid = firstPartUid();
@@ -174,6 +174,22 @@ export class CustomerService {
     }
   }
 
+  async getCustomerLikeVendor(customerUid: string) {
+    try {
+      const favorites = await this.prisma.customerFavoriteVendor.findMany({
+        where: {
+          customerUid: customerUid,
+        },
+        include: {
+          vendor: true, // Includes car details in the result
+        },
+      });
+      return favorites.map((fav) => fav.vendor);
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async addFavoriteCar(token: string, carpostId: number) {
     if (!token) {
       throw new HttpException('Token is required', HttpStatus.UNAUTHORIZED);
@@ -191,49 +207,172 @@ export class CustomerService {
       });
       return { message: 'Car successfully added to favorites' };
     } catch (error) {
-
-      
-      throw new HttpException('Failed to add car to favorites', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Failed to add car to favorites',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
+  async getLikeVendor(token: string) {
+    try {
 
-  async getLikedCar(token: string){
+      if (!token) {
+        throw new HttpException('Token is required', HttpStatus.UNAUTHORIZED);
+      }
+  
+      const customer = await this.authService.getProfile(token);
+      if (!customer) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
+      console.log(customer.customeruid);
+      
+      const favorites = await this.prisma.customerFavoriteVendor.findMany({
+        where: {
+          customerUid: customer.customeruid,
+        },
+        include: {
+          vendor: true, // Includes car details in the result
+        },
+      });
+      return favorites.map((fav) => fav.vendor);
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async addLikeVendor(token: string, vendorId: number) {
     if (!token) {
       throw new HttpException('Token is required', HttpStatus.UNAUTHORIZED);
     }
-  
     const customer = await this.authService.getProfile(token);
     if (!customer) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
     try {
-      const result =  await this.prisma.customerFavorite.findMany({
-        where : {
-          customerUid : customer.customeruid
+      await this.prisma.customerFavoriteVendor.create({
+        data: {
+          customerUid: customer.customeruid,
+          vendorId: Number(vendorId),
+        },
+        
+      });
+        // favoriteCount
+        await this.prisma.vendor.update({
+          where: { id: Number(vendorId) },
+          data: {
+            likeCount: { increment: 1 },
+          },
+        });
+
+      return { message: 'vendor successfully added to favorites' };
+    } catch (error) {
+      // console.log(error);
+      
+      throw new HttpException(
+        'Failed to add vendor to favorites',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async getLikedCar(token: string) {
+    if (!token) {
+      throw new HttpException('Token is required', HttpStatus.UNAUTHORIZED);
+    }
+
+    const customer = await this.authService.getProfile(token);
+    if (!customer) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    try {
+      const result = await this.prisma.customerFavorite.findMany({
+        where: {
+          customerUid: customer.customeruid,
         },
       });
       return result;
     } catch (error) {
-      throw new HttpException('Failed to retrieve liked car', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Failed to retrieve liked car',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
-  
+
+  async toggleFavoriteVendor(customerUid: string, vendorId: number) {
+    try {
+      const parsedVendorId = Number(vendorId);
+
+      // ตรวจสอบว่ามี Favorite อยู่แล้วหรือไม่
+      const existingFavorite =
+        await this.prisma.customerFavoriteVendor.findUnique({
+          where: {
+            customerUid_vendorId: {
+              customerUid,
+              vendorId: parsedVendorId,
+            },
+          },
+        });
+
+      if (existingFavorite) {
+        // ถ้ามี Favorite แล้ว ให้ลบออก
+        await this.prisma.customerFavoriteVendor.delete({
+          where: {
+            id: existingFavorite.id,
+          },
+        });
+
+        // ลดค่า favoriteCount
+        await this.prisma.vendor.update({
+          where: { id: vendorId },
+          data: {
+            likeCount: { decrement: 1 },
+          },
+        });
+
+        return { message: 'Vendor removed from Liked successfully' };
+      } else {
+        // ถ้ายังไม่มี Favorite ให้เพิ่มใหม่
+        await this.prisma.customerFavoriteVendor.create({
+          data: {
+            customerUid,
+            vendorId,
+          },
+        });
+
+        // เพิ่มค่า favoriteCount
+        await this.prisma.vendor.update({
+          where: { id: vendorId },
+          data: {
+            likeCount: { increment: 1 },
+          },
+        });
+
+        return { message: 'Post added to favorites successfully' };
+      }
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Unexpected error occurred',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   async toggleFavoriteCarPost(customerUid: string, postId: number) {
     try {
       const parsedPostId = Number(postId);
 
-      
       // ตรวจสอบว่ามี Favorite อยู่แล้วหรือไม่
       const existingFavorite = await this.prisma.customerFavorite.findUnique({
         where: {
           customerUid_postId: {
             customerUid,
-            postId : parsedPostId
+            postId: parsedPostId,
           },
         },
       });
-  
+
       if (existingFavorite) {
         // ถ้ามี Favorite แล้ว ให้ลบออก
         await this.prisma.customerFavorite.delete({
@@ -241,7 +380,7 @@ export class CustomerService {
             id: existingFavorite.id,
           },
         });
-  
+
         // ลดค่า favoriteCount
         await this.prisma.carPost.update({
           where: { id: postId },
@@ -249,7 +388,7 @@ export class CustomerService {
             favoriteCount: { decrement: 1 },
           },
         });
-  
+
         return { message: 'Post removed from favorites successfully' };
       } else {
         // ถ้ายังไม่มี Favorite ให้เพิ่มใหม่
@@ -259,7 +398,7 @@ export class CustomerService {
             postId,
           },
         });
-  
+
         // เพิ่มค่า favoriteCount
         await this.prisma.carPost.update({
           where: { id: postId },
@@ -267,12 +406,14 @@ export class CustomerService {
             favoriteCount: { increment: 1 },
           },
         });
-  
+
         return { message: 'Post added to favorites successfully' };
       }
     } catch (error) {
-      throw new HttpException(error.message || 'Unexpected error occurred', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        error.message || 'Unexpected error occurred',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
-  }
-
+}

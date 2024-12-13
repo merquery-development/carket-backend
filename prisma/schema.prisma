@@ -8,22 +8,25 @@ datasource db {
 }
 
 model Vendor {
-  id             Int     @id @default(autoincrement())
-  uid            String? @unique @default(uuid()) @map("uid")
-  name           String
-  email          String
-  phone          String
-  address        String
-  storeImageName String? @map("store_image_name")
-  storeImagePath String? @map("store_image_path")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-
-  vendorSubscription VendorSubscription?
-  users              VendorUser[]
-  banners            VendorBanner[]
-  carPosts           CarPost[]
+  id                  Int                      @id @default(autoincrement())
+  uid                 String?                  @unique @default(uuid()) @map("uid")
+  name                String
+  email               String
+  phone               String
+  address             String
+  storeImageName      String?                  @map("store_image_name")
+  storeImagePath      String?                  @map("store_image_path")
+  isPDPAacknowledged  Boolean                  @default(false) @map("is_pdpa_acknowledged")
+  PDPAAacknowledgedAt DateTime                 @default(now()) @map("pdpa_acknowledged_at")
+  PDPDAdetails        Json?                    @map("pdpa_details")
+  createdAt           DateTime                 @default(now()) @map("created_at")
+  updatedAt           DateTime                 @default(now()) @updatedAt @map("updated_at")
+  likeCount           Int?                     @default(0) @map("like_count")
+  vendorSubscription  VendorSubscription?
+  users               VendorUser[]
+  banners             VendorBanner[]
+  carPosts            CarPost[]
+  likedBy             CustomerFavoriteVendor[] // New relation field
 
   @@map("vendors")
 }
@@ -78,29 +81,46 @@ model CustomerFavorite {
   @@map("customer_favorites")
 }
 
+model CustomerFavoriteVendor {
+  id          Int      @id @default(autoincrement())
+  customerUid String   @map("customer_uid") // Foreign key to Customer
+  vendorId    Int      @map("vendor_id") // Foreign key to Car
+  createdAt   DateTime @default(now()) @map("created_at")
+  customer    Customer @relation(fields: [customerUid], references: [uid])
+  vendor      Vendor   @relation(fields: [vendorId], references: [id])
+
+  @@unique([customerUid, vendorId]) // Ensure each customer can favorite a car only once
+  @@map("customer_favorites_vendor")
+}
+
 model Customer {
-  id                 Int                @id @default(autoincrement())
-  uid                String             @unique @default(uuid()) @map("uid")
-  mobileNumber       String?            @map("mobile_number")
-  lastLogin          DateTime?          @map("last_login")
-  nickName           String?            @map(" nick_name")
-  firstName          String?            @map("first_name")
-  lastName           String?            @map("last_name")
-  username           String?
-  email              String?
-  password           String?
-  isEnable           Boolean            @default(true) @map("is_enable")
-  profilePicturePath String?            @map("profile_picture_path")
-  profilePictureName String?            @map("profile_picture_name")
-  isOauth            Boolean            @default(false) @map("is_oauth")
-  oauthType          String?            @map("oauth_type")
-  oauthUserData      Json?              @map("oauth_user_data")
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at")
-  deletedAt          DateTime?          @map("deleted_at")
-  carViews           UserCarView[]
-  reviews            Review[] // เพิ่ม relation field นี้
-  favorites          CustomerFavorite[] // New relation field
+  id                  Int       @id @default(autoincrement())
+  uid                 String    @unique @default(uuid()) @map("uid")
+  mobileNumber        String?   @map("mobile_number")
+  lastLogin           DateTime? @map("last_login")
+  nickName            String?   @map(" nick_name")
+  firstName           String?   @map("first_name")
+  lastName            String?   @map("last_name")
+  username            String?
+  email               String?
+  password            String?
+  isEnable            Boolean   @default(true) @map("is_enable")
+  profilePicturePath  String?   @map("profile_picture_path")
+  profilePictureName  String?   @map("profile_picture_name")
+  isOauth             Boolean   @default(false) @map("is_oauth")
+  oauthType           String?   @map("oauth_type")
+  oauthUserData       Json?     @map("oauth_user_data")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt           DateTime? @map("deleted_at")
+  isPDPAacknowledged  Boolean   @default(false) @map("is_pdpa_acknowledged")
+  PDPAAacknowledgedAt DateTime  @default(now()) @map("pdpa_acknowledged_at")
+  PDPDAdetails        Json?     @map("pdpa_details")
+
+  likes     CustomerFavoriteVendor[]
+  carViews  UserCarView[]
+  reviews   Review[] // เพิ่ม relation field นี้
+  favorites CustomerFavorite[] // New relation field
 
   @@map("customers")
 }
