@@ -620,8 +620,10 @@ export class CarPostService {
     return result;
   }
 
-  async getNewCarpostByVendor(uid: string) {
-  
+  async getNewCarpostByVendor(uid: string,amount: number) {
+    const limit = amount > 0 ? amount : 3;
+
+    
     const result = await this.prisma.carPost.findMany({
       where: {
         vendor: {
@@ -633,7 +635,7 @@ export class CarPostService {
       orderBy: {
         createdAt: 'desc',
       },
-      take: 3,
+      take: Number(limit), // ใช้ค่าที่กำหนดจากพารามิเตอร์ amount
       select: {
         id: true,
         price: true,
@@ -669,9 +671,10 @@ export class CarPostService {
         },
       },
     });
-  
+
+
     // จัดการข้อมูลผลลัพธ์ให้อยู่ในรูปแบบที่กำหนด
-    const items = result.map((item) => {
+      const items = result.map((item) => {
       const date = new Date(item.createdAt);
       const month = date.toLocaleString('en-US', { month: 'short' });
       const day = date.getDate();
@@ -703,5 +706,6 @@ export class CarPostService {
       };
     });
   
+    
     return items;
   }}

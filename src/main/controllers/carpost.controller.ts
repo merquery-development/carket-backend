@@ -341,6 +341,7 @@ export class CarPostController {
   }
   @CacheKey('bar')
   @CacheTTL(24 * 60 * 60 * 1000) //millisecond
+
   @Get('bar')
   @ApiResponse({
     status: 200,
@@ -376,14 +377,16 @@ export class CarPostController {
   @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
   @ApiQuery({ name: 'brandId', required: false, type: [String], isArray: true })
-  @ApiQuery({ name: 'categoryId', required: false, type: [String], isArray: true })
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    type: [String],
+    isArray: true,
+  })
   @ApiQuery({ name: 'vendorUid', required: true, type: String })
-  async getCarPostByVendorUid(
-   
-    @Query() params: Record<string, any>,
-  ) {
+  async getCarPostByVendorUid(@Query() params: Record<string, any>) {
     try {
-      return await this.carPostService.getCarPostByVendorUid( params); // ส่ง vendorId และ params ไปยัง service
+      return await this.carPostService.getCarPostByVendorUid(params); // ส่ง vendorId และ params ไปยัง service
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -407,12 +410,20 @@ export class CarPostController {
       );
     }
   }
-
+  @ApiQuery({
+    name: 'amount',
+    required: false,
+    type: Number,
+    description: 'Number of newest carpost',
+  })
   @Get('newcar/:vendorUid')
-  async getNewCar(@Param('vendorUid') uid : string){
+  async getNewCar(@Param('vendorUid') uid: string, @Query('amount') amount: number) {
     try {
-        const newest = await this.carPostService.getNewCarpostByVendor(uid)
-        return newest
+      const newest = await this.carPostService.getNewCarpostByVendor(
+        uid,
+        amount,
+      );
+      return newest;
     } catch (error) {
       throw new HttpException(
         { message: 'Error newest car', error: error.message },
