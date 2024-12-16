@@ -3,6 +3,11 @@ FROM node:20-alpine
 
 RUN apk update && apk add yarn curl bash make && rm -rf /var/cache/apk/*
 
+RUN set -ex; \
+    apt-get update -y ; \
+    apt-get install -y --no-install-recommends \
+    openssl
+
 # Create app directory
 WORKDIR /usr/src/app
 
