@@ -11,7 +11,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # delete lock file to avoid conflicts
-RUN rm yarn.lock
+RUN rm yarn.lock || true
 
 
 
