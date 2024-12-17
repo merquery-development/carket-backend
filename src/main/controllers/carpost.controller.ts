@@ -431,4 +431,18 @@ export class CarPostController {
       );
     }
   }
+
+  @Get('withOverride/:uid')
+  @ApiOperation({ summary: 'ดึงข้อมูล CarPost พร้อม merge ข้อมูล specification' })
+  @ApiResponse({
+    status: 200,
+    description: 'ข้อมูล CarPost พร้อม final specifications',
+   
+  })
+  @ApiResponse({ status: 404, description: 'CarPost not found' })
+  async getCarPostWithOverrides(
+    @Param('uid') carPostUid: string,
+  ) {
+    return this.carPostService.getCarPostWithOverrides(carPostUid);
+  }
 }

@@ -708,4 +708,50 @@ export class CarPostService {
   
     
     return items;
-  }}
+  }
+  async getCarPostWithOverrides(carPostUid: string) {
+    // ดึงข้อมูล CarPost พร้อมข้อมูล Car ที่เกี่ยวข้อง
+    const carPost = await this.prisma.carPost.findUnique({
+      where: { uid: carPostUid },
+      include: {
+        car: true, // ดึงข้อมูลรถที่เชื่อมโยง
+      },
+    });
+  
+    if (!carPost) throw new Error('CarPost not found');
+  
+    // Default (Car) และ Override (CarPost.overrideSpecification)
+    const carSpecifications =
+      typeof carPost.car.specifications === 'object' && carPost.car.specifications !== null
+        ? carPost.car.specifications
+        : {}; // ตรวจสอบ Car Specifications
+  
+    const overrideSpecifications =
+      typeof carPost.overrideSpecification === 'string'
+        ? JSON.parse(carPost.overrideSpecification) // แปลง JSON String เป็น Object
+        : typeof carPost.overrideSpecification === 'object' && carPost.overrideSpecification !== null
+        ? carPost.overrideSpecification
+        : {}; // กรณีเป็น JsonObject หรือ JsonArray
+  
+    // ทำการ merge ข้อมูล
+    const finalSpecifications = { ...carSpecifications, ...overrideSpecifications };
+  
+    // คืนค่าเฉพาะ CarPost พร้อม finalSpecifications
+    return {
+
+      uid: carPost.uid,
+      carId: carPost.carId,
+      vendorId: carPost.vendorId,
+      price: carPost.price,
+      year: carPost.year,
+      mileage: carPost.mileage,
+      preDiscountPrice: carPost.preDiscountPrice,
+      isDiscount: carPost.isDiscount,
+      createdAt: carPost.createdAt,
+      updatedAt: carPost.updatedAt,
+      deletedAt: carPost.deletedAt,
+      viewCount: carPost.viewCount,
+      favoriteCount: carPost.favoriteCount,
+      finalSpecifications, // ข้อมูลที่ถูก merge แล้ว
+    };
+  }}  
